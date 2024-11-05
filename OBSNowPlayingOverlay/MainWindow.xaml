@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:OBSNowPlayingOverlay"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
-        Title="設定視窗" Height="250" Width="400">
+        Title="設定視窗" Height="280" Width="400" Icon="/icon.png">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>

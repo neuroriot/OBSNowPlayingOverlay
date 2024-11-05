@@ -1,6 +1,7 @@
 ﻿using OBSNowPlayingOverlay.WebSocketBehavior;
 using Spectre.Console;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Windows;
@@ -97,28 +98,42 @@ namespace OBSNowPlayingOverlay
             }
         }
 
-        private HttpClient _httpClient = new();
+        private HttpClient _httpClient = new(new HttpClientHandler() { AllowAutoRedirect = false });
         private string latestCoverUrl = "";
         private string latestTitle = "";
         public async Task UpdateNowPlayingDataAsync(NowPlayingJson nowPlayingJson)
         {
-            if (latestCoverUrl != nowPlayingJson.Cover)
-            {
-
-
-                latestCoverUrl = nowPlayingJson.Cover;
-
-                var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
-
-                img_Cover.Dispatcher.Invoke(() => img_Cover.Source = BitmapFrame.Create(imageStream,
-                                      BitmapCreateOptions.None,
-                                      BitmapCacheOption.OnLoad));
-            }
-
             if (latestTitle != nowPlayingJson.Title)
             {
                 latestTitle = nowPlayingJson.Title;
                 AnsiConsole.WriteLine($"歌曲切換: {nowPlayingJson.Artists.FirstOrDefault() ?? "無"} - {nowPlayingJson.Title}");
+            }
+
+            if (latestCoverUrl != nowPlayingJson.Cover)
+            {
+                latestCoverUrl = nowPlayingJson.Cover;
+
+                try
+                {
+                    AnsiConsole.WriteLine($"開始下載封面: {nowPlayingJson.Cover}");
+
+                    var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
+
+                    MemoryStream memoryStream = new();
+                    imageStream.CopyTo(memoryStream);
+                    imageStream.Dispose();
+                    memoryStream.Position = 0; // 不知道為啥位置不是在 0，需要手動設定
+
+                    img_Cover.Dispatcher.Invoke(() =>
+                    {
+                        img_Cover.Source = BitmapFrame.Create(memoryStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                    });
+                }
+                catch (Exception ex)
+                {
+                    _notifier.ShowError("封面圖下載失敗，可能是找不到圖片");
+                    AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+                }
             }
 
             rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
