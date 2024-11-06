@@ -1,16 +1,23 @@
-﻿using OBSNowPlayingOverlay.WebSocketBehavior;
+﻿using Dorssel.Utilities;
+using OBSNowPlayingOverlay.WebSocketBehavior;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Quantization;
 using Spectre.Console;
 using System.Collections.Concurrent;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ToastNotifications;
 using ToastNotifications.Lifetime;
 using ToastNotifications.Messages;
 using ToastNotifications.Position;
 using WebSocketSharp.Server;
+using Image = SixLabors.ImageSharp.Image;
 
 namespace OBSNowPlayingOverlay
 {
@@ -20,6 +27,10 @@ namespace OBSNowPlayingOverlay
     public partial class MainWindow : Window
     {
         private readonly Notifier _notifier;
+        private readonly HttpClient _httpClient;
+        private readonly Debouncer _pauseMusicDebouncer;
+
+        private string latestCoverUrl = "", latestTitle = "";
         private WebSocketServer? wsServer;
 
         public static BlockingCollection<NowPlayingJson> MsgQueue { get; } = new();
@@ -43,6 +54,17 @@ namespace OBSNowPlayingOverlay
                 cfg.Dispatcher = Application.Current.Dispatcher;
             });
 
+            _httpClient = new(new HttpClientHandler()
+            {
+                AllowAutoRedirect = false
+            });
+
+            _pauseMusicDebouncer = new()
+            {
+                DebounceWindow = TimeSpan.FromSeconds(1)
+            };
+            _pauseMusicDebouncer.Debounced += _pauseMusicDebouncer_Debounced;
+
             Task.Run(async () =>
             {
                 while (!MsgQueue.IsCompleted)
@@ -62,51 +84,60 @@ namespace OBSNowPlayingOverlay
                     await UpdateNowPlayingDataAsync(data);
                 }
             });
+
+            try
+            {
+                var nowPlaying = new NowPlaying();
+
+                wsServer = new WebSocketServer(IPAddress.Loopback, 8000);
+                wsServer.AddWebSocketService<NowPlaying>("/");
+                wsServer.Start();
+            }
+            catch (System.Net.Sockets.SocketException ex) when (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse)
+            {
+                _notifier.ShowError("伺服器啟動失敗，請確認是否有其他應用程式使用 TCP 8000 Port");
+                AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+                return;
+            }
         }
 
-        private void btn_ToggleWSServer_Click(object sender, RoutedEventArgs e)
+        private void _pauseMusicDebouncer_Debounced(object? sender, DebouncedEventArgs e)
         {
-            if (wsServer == null)
+            img_Pause.Dispatcher.Invoke(() =>
             {
-                _notifier.ShowInformation("啟動 WebSocket 伺服器", new() { UnfreezeOnMouseLeave = true });
+                img_Pause.Visibility = Visibility.Visible;
+            });
+        }
 
-                try
-                {
-                    var nowPlaying = new NowPlaying();
-
-                    wsServer = new WebSocketServer(IPAddress.Loopback, 8000);
-                    wsServer.AddWebSocketService<NowPlaying>("/");
-                    wsServer.Start();
-                }
-                catch (System.Net.Sockets.SocketException ex) when (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse)
-                {
-                    _notifier.ShowError("伺服器啟動失敗，請確認是否有其他應用程式使用 TCP 8000 Port");
-                    AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-                    return;
-                }
-
-                btn_ToggleWSServer.Dispatcher.Invoke(() => btn_ToggleWSServer.Content = "關閉 WS 伺服器");
-            }
-            else
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
             {
-                _notifier.ShowInformation("停止 WebSocket 伺服器", new() { UnfreezeOnMouseLeave = true });
-
-                wsServer.Stop();
+                wsServer?.Stop();
                 wsServer = null;
-
-                btn_ToggleWSServer.Dispatcher.Invoke(() => btn_ToggleWSServer.Content = "開啟 WS 伺服器");
+            }
+            catch (Exception)
+            {
+                // Ignore
             }
         }
 
-        private HttpClient _httpClient = new(new HttpClientHandler() { AllowAutoRedirect = false });
-        private string latestCoverUrl = "";
-        private string latestTitle = "";
+        private void grid_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        }
+
         public async Task UpdateNowPlayingDataAsync(NowPlayingJson nowPlayingJson)
         {
             if (latestTitle != nowPlayingJson.Title)
             {
                 latestTitle = nowPlayingJson.Title;
                 AnsiConsole.WriteLine($"歌曲切換: {nowPlayingJson.Artists.FirstOrDefault() ?? "無"} - {nowPlayingJson.Title}");
+                AnsiConsole.WriteLine($"歌曲連結: {nowPlayingJson.SongLink}");
+                _pauseMusicDebouncer.Reset();
             }
 
             if (latestCoverUrl != nowPlayingJson.Cover)
@@ -117,16 +148,48 @@ namespace OBSNowPlayingOverlay
                 {
                     AnsiConsole.WriteLine($"開始下載封面: {nowPlayingJson.Cover}");
 
-                    var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
+                    using var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
+                    using var image = await Image.LoadAsync<Rgba32>(imageStream);
 
-                    MemoryStream memoryStream = new();
-                    imageStream.CopyTo(memoryStream);
-                    imageStream.Dispose();
-                    memoryStream.Position = 0; // 不知道為啥位置不是在 0，需要手動設定
+                    // 若圖片非正方形才進行裁切
+                    if (image.Width != image.Height)
+                    {
+                        // 將圖片從正中間裁切
+                        // 若圖片的寬比較大，就由寬來裁切
+                        if (image.Width > image.Height)
+                        {
+                            int x = image.Width / 4, cropWidth = image.Width / 2;
+                            image.Mutate(i => i
+                                .Crop(new SixLabors.ImageSharp.Rectangle(x, 0, cropWidth, image.Height)));
+                        }
+                        else
+                        {
+                            int y = image.Height / 4, cropHeight = image.Height / 2;
+                            image.Mutate(i => i
+                                .Crop(new SixLabors.ImageSharp.Rectangle(0, y, image.Width, cropHeight)));
+                        }
+                    }
 
+                    // 設定圖片
                     img_Cover.Dispatcher.Invoke(() =>
                     {
-                        img_Cover.Source = BitmapFrame.Create(memoryStream, BitmapCreateOptions.None, BitmapCacheOption.OnLoad);
+                        img_Cover.Source = GetBMP(image);
+                    });
+
+                    // 取得圖片的主要顏色
+                    // https://gist.github.com/JimBobSquarePants/12e0ef5d904d03110febea196cf1d6ee
+                    image.Mutate(x => x
+                        // Scale the image down preserving the aspect ratio. This will speed up quantization.
+                        // We use nearest neighbor as it will be the fastest approach.
+                        .Resize(new ResizeOptions() { Sampler = KnownResamplers.NearestNeighbor, Size = new SixLabors.ImageSharp.Size(128, 0) })
+                        // Reduce the color palette to 1 color without dithering.
+                        .Quantize(new OctreeQuantizer(new QuantizerOptions { MaxColors = 1 })));
+
+                    // 設定背景顏色
+                    var color = image[0, 0];
+                    bg.Dispatcher.Invoke(() =>
+                    {
+                        bg.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B));
                     });
                 }
                 catch (Exception ex)
@@ -139,6 +202,59 @@ namespace OBSNowPlayingOverlay
             rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
             lab_Subtitle.Dispatcher.Invoke(() => { lab_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
             pb_Process.Dispatcher.Invoke(() => { pb_Process.Value = (nowPlayingJson.Progress / nowPlayingJson.Duration) * 100; });
+
+            // 正常來說可以透過 nowPlayingJson.Status 來判定目前的播放狀態，但因為插件在播放暫停後會停止丟數據，所以改由 Debouncer 來做暫停圖示切換
+            img_Pause.Dispatcher.Invoke(() =>
+            {
+                img_Pause.Visibility = Visibility.Hidden;
+            });
+
+            // 當播放進度到達 99% 後就把 Debouncer 重製，避免在切換歌曲的時候出現暫停圖示
+            if (nowPlayingJson.Progress / nowPlayingJson.Duration * 100 >= 99)
+            {
+                _pauseMusicDebouncer.Reset();
+            }
+            else
+            {
+                _pauseMusicDebouncer.Trigger();
+            }
+        }
+
+        // https://github.com/SixLabors/ImageSharp/issues/531#issuecomment-2275170928
+        private WriteableBitmap GetBMP(Image<Rgba32> _imgState)
+        {
+            var bmp = new WriteableBitmap(_imgState.Width, _imgState.Height, _imgState.Metadata.HorizontalResolution, _imgState.Metadata.VerticalResolution, PixelFormats.Bgra32, null);
+
+            bmp.Lock();
+            try
+            {
+                _imgState.ProcessPixelRows(accessor =>
+                {
+                    var backBuffer = bmp.BackBuffer;
+
+                    for (var y = 0; y < _imgState.Height; y++)
+                    {
+                        Span<Rgba32> pixelRow = accessor.GetRowSpan(y);
+
+                        for (var x = 0; x < _imgState.Width; x++)
+                        {
+                            var backBufferPos = backBuffer + (y * _imgState.Width + x) * 4;
+                            var rgba = pixelRow[x];
+                            var color = rgba.A << 24 | rgba.R << 16 | rgba.G << 8 | rgba.B;
+
+                            System.Runtime.InteropServices.Marshal.WriteInt32(backBufferPos, color);
+                        }
+                    }
+                });
+
+                bmp.AddDirtyRect(new Int32Rect(0, 0, _imgState.Width, _imgState.Height));
+            }
+            finally
+            {
+                bmp.Unlock();
+            }
+
+            return bmp;
         }
     }
 }
