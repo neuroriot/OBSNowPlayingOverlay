@@ -33,13 +33,13 @@ namespace OBSNowPlayingOverlay.WebSocketBehavior
                 }
                 catch (Exception ex)
                 {
-                    AnsiConsole.WriteLine(e.Data);
+                    AnsiConsole.MarkupLineInterpolated($"[olive]{e.Data}[/]");
                     AnsiConsole.WriteException(ex, ExceptionFormats.Default);
                 }
             }
             else
             {
-                AnsiConsole.WriteLine(e.Data);
+                AnsiConsole.MarkupLineInterpolated($"[dodgerblue2]{e.Data}[/]");
             }
         }
     }

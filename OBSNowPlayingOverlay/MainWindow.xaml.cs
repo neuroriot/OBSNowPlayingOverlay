@@ -1,5 +1,4 @@
-﻿using Dorssel.Utilities;
-using OBSNowPlayingOverlay.WebSocketBehavior;
+﻿using OBSNowPlayingOverlay.WebSocketBehavior;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -28,9 +27,8 @@ namespace OBSNowPlayingOverlay
     {
         private readonly Notifier _notifier;
         private readonly HttpClient _httpClient;
-        private readonly Debouncer _pauseMusicDebouncer;
 
-        private string latestCoverUrl = "", latestTitle = "";
+        private string latestTitle = "";
         private WebSocketServer? wsServer;
 
         public static BlockingCollection<NowPlayingJson> MsgQueue { get; } = new();
@@ -59,12 +57,6 @@ namespace OBSNowPlayingOverlay
                 AllowAutoRedirect = false
             });
 
-            _pauseMusicDebouncer = new()
-            {
-                DebounceWindow = TimeSpan.FromSeconds(1)
-            };
-            _pauseMusicDebouncer.Debounced += _pauseMusicDebouncer_Debounced;
-
             Task.Run(async () =>
             {
                 while (!MsgQueue.IsCompleted)
@@ -87,8 +79,6 @@ namespace OBSNowPlayingOverlay
 
             try
             {
-                var nowPlaying = new NowPlaying();
-
                 wsServer = new WebSocketServer(IPAddress.Loopback, 8000);
                 wsServer.AddWebSocketService<NowPlaying>("/");
                 wsServer.Start();
@@ -99,14 +89,6 @@ namespace OBSNowPlayingOverlay
                 AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
                 return;
             }
-        }
-
-        private void _pauseMusicDebouncer_Debounced(object? sender, DebouncedEventArgs e)
-        {
-            img_Pause.Dispatcher.Invoke(() =>
-            {
-                img_Pause.Visibility = Visibility.Visible;
-            });
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -135,18 +117,12 @@ namespace OBSNowPlayingOverlay
             if (latestTitle != nowPlayingJson.Title)
             {
                 latestTitle = nowPlayingJson.Title;
-                AnsiConsole.WriteLine($"歌曲切換: {nowPlayingJson.Artists.FirstOrDefault() ?? "無"} - {nowPlayingJson.Title}");
-                AnsiConsole.WriteLine($"歌曲連結: {nowPlayingJson.SongLink}");
-                _pauseMusicDebouncer.Reset();
-            }
-
-            if (latestCoverUrl != nowPlayingJson.Cover)
-            {
-                latestCoverUrl = nowPlayingJson.Cover;
+                AnsiConsole.MarkupLineInterpolated($"歌曲切換: [green]{nowPlayingJson.Artists.FirstOrDefault() ?? "無"} - {nowPlayingJson.Title}[/]");
+                AnsiConsole.MarkupLineInterpolated($"歌曲連結: [green]{nowPlayingJson.SongLink}[/]");
 
                 try
                 {
-                    AnsiConsole.WriteLine($"開始下載封面: {nowPlayingJson.Cover}");
+                    AnsiConsole.MarkupLineInterpolated($"開始下載封面: [green]{nowPlayingJson.Cover}[/]");
 
                     using var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
                     using var image = await Image.LoadAsync<Rgba32>(imageStream);
@@ -160,13 +136,13 @@ namespace OBSNowPlayingOverlay
                         {
                             int x = image.Width / 4, cropWidth = image.Width / 2;
                             image.Mutate(i => i
-                                .Crop(new SixLabors.ImageSharp.Rectangle(x, 0, cropWidth, image.Height)));
+                                .Crop(new Rectangle(x, 0, cropWidth, image.Height)));
                         }
                         else
                         {
                             int y = image.Height / 4, cropHeight = image.Height / 2;
                             image.Mutate(i => i
-                                .Crop(new SixLabors.ImageSharp.Rectangle(0, y, image.Width, cropHeight)));
+                                .Crop(new Rectangle(0, y, image.Width, cropHeight)));
                         }
                     }
 
@@ -203,21 +179,10 @@ namespace OBSNowPlayingOverlay
             lab_Subtitle.Dispatcher.Invoke(() => { lab_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
             pb_Process.Dispatcher.Invoke(() => { pb_Process.Value = (nowPlayingJson.Progress / nowPlayingJson.Duration) * 100; });
 
-            // 正常來說可以透過 nowPlayingJson.Status 來判定目前的播放狀態，但因為插件在播放暫停後會停止丟數據，所以改由 Debouncer 來做暫停圖示切換
-            img_Pause.Dispatcher.Invoke(() =>
+            grid_Pause.Dispatcher.Invoke(() =>
             {
-                img_Pause.Visibility = Visibility.Hidden;
+                grid_Pause.Visibility = nowPlayingJson.Status == "playing" ? Visibility.Hidden : Visibility.Visible;
             });
-
-            // 當播放進度到達 99% 後就把 Debouncer 重製，避免在切換歌曲的時候出現暫停圖示
-            if (nowPlayingJson.Progress / nowPlayingJson.Duration * 100 >= 99)
-            {
-                _pauseMusicDebouncer.Reset();
-            }
-            else
-            {
-                _pauseMusicDebouncer.Trigger();
-            }
         }
 
         // https://github.com/SixLabors/ImageSharp/issues/531#issuecomment-2275170928

@@ -32,6 +32,9 @@
                 <RectangleGeometry RadiusX="8" RadiusY="8" Rect="0,0,120,120"/>
             </Image.Clip>
         </Image>
-        <Image x:Name="img_Pause" Width="120" Height="120" Source="/Assets/pause.png" Opacity="0.75" Visibility="Hidden" />
+        <Grid x:Name="grid_Pause" Visibility="Hidden">
+            <Rectangle Fill="Black" Opacity="0.5" />
+            <Image Width="120" Height="120" Source="/Assets/pause.png" Opacity="0.75" />
+        </Grid>        
     </Grid>
 </Window>

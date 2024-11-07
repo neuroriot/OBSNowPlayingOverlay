@@ -2,6 +2,9 @@
 
 WIP...
 
-[Vinyl icons](https://www.flaticon.com/free-icons/vinyl) created by Those Icons - Flaticon
-[Lp icons](https://www.flaticon.com/free-icons/lp) created by Alfredo Hernandez - Flaticon
-[Pause icons](https://www.flaticon.com/free-icons/pause) created by Debi Alpa Nugraha - Flaticon
+# About
+
+- [Now Playing - OBS](https://gitlab.com/tizhproger/now-playing-obs)
+- [Vinyl icons](https://www.flaticon.com/free-icons/vinyl) created by Those Icons - Flaticon
+- [Lp icons](https://www.flaticon.com/free-icons/lp) created by Alfredo Hernandez - Flaticon
+- [Pause icons](https://www.flaticon.com/free-icons/pause) created by Debi Alpa Nugraha - Flaticon
