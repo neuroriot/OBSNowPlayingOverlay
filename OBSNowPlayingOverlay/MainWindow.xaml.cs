@@ -81,13 +81,13 @@ namespace OBSNowPlayingOverlay
 
             try
             {
-                wsServer = new WebSocketServer(IPAddress.Loopback, 8000);
+                wsServer = new WebSocketServer(IPAddress.Loopback, 52998);
                 wsServer.AddWebSocketService<NowPlaying>("/");
                 wsServer.Start();
             }
             catch (System.Net.Sockets.SocketException ex) when (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse)
             {
-                _notifier.ShowError("伺服器啟動失敗，請確認是否有其他應用程式使用 TCP 8000 Port");
+                _notifier.ShowError("伺服器啟動失敗，請確認是否有其他應用程式使用 TCP 52998 Port");
                 AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
                 return;
             }

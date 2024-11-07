@@ -2,7 +2,7 @@ var conn = null;
 var transfer_interval = null;
 var join_interval = null;
 var hostname = window.location.hostname;
-const FETCH_URL = 'ws://localhost:8000/';
+const FETCH_URL = 'ws://localhost:52998/';
 var join_retry_time = 2000
 var isStopped = false;
 
