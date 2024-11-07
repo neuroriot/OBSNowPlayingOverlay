@@ -10,13 +10,15 @@
 
 1. 安裝瀏覽器插件 (還未審核完成，可自行使用開發人員模式安裝 Web Extension 內的資料，審核完之後會替換成商店連結，[參考安裝方式](https://zenreal.github.io/posts/58580/))
 2. [點我下載](https://github.com/konnokai/OBSNowPlayingOverlay/releases/latest/download/OBSNowPlayingOverlay.zip) 最新版的 `OBSNowPlayingOverlay.zip` 壓縮包並解壓縮
-3. 確保瀏覽器插件已安裝，並打開 `OBSNowPlayingOverlay.exe`
+3. 確保瀏覽器插件已安裝，並打開 `OBSNowPlayingOverlay.exe` (應該會提示要安裝 .NET 6 Desktop Runtime，如果沒有的話就下載 [這個](https://dotnet.microsoft.com/zh-tw/download/dotnet/thank-you/runtime-desktop-6.0.35-windows-x64-installer) 來安裝)
 4. 設定想要的字型以及視窗寬度
 5. 打開 OBS，新增 `視窗擷取` 來源，並按照下方圖片設定
 
 ![OBSProperty](Docs/OBSProperty.png)
 
 6. 開始播放任一支援的平台音樂，若正常的話即會出現正在播放的音樂狀態 (剛安裝完插件的話需要重整網頁或是重開瀏覽器來讓插件載入)
+
+OBS 的畫面應該會長這樣
 
 ![OBSDone](Docs/OBSDone.png)
 
