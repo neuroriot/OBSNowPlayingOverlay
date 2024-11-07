@@ -150,7 +150,7 @@ function start_transfer() {
 
             let time = query('.ytmusic-player-bar.time-info', e => e.innerText.split(" / "));
 
-            let status = query('#play-pause-button', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Воспроизвести' ? 'stopped' : 'playing'));
+            let status = query('#play-pause-button', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Воспроизвести' || e.getAttribute('aria-label') === '播放' ? 'stopped' : 'playing'));
 
             let title = document.getElementsByClassName("title style-scope ytmusic-player-bar")[0].innerHTML;
             let artists = [navigator.mediaSession.metadata.artist];
