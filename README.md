@@ -8,8 +8,8 @@
 
 # 如何使用
 
-1. 安裝瀏覽器插件 (還未審核完成，可自行使用開發人員模式安裝 Web Extension 內的資料，[參考安裝方式](https://zenreal.github.io/posts/58580/))
-2. [點我下載](/releases/latest/download/OBSNowPlayingOverlay.zip) 最新版的 `OBSNowPlayingOverlay.zip` 壓縮包並解壓縮
+1. 安裝瀏覽器插件 (還未審核完成，可自行使用開發人員模式安裝 Web Extension 內的資料，審核完之後會替換成商店連結，[參考安裝方式](https://zenreal.github.io/posts/58580/))
+2. [點我下載](https://github.com/konnokai/OBSNowPlayingOverlay/releases/latest/download/OBSNowPlayingOverlay.zip) 最新版的 `OBSNowPlayingOverlay.zip` 壓縮包並解壓縮
 3. 確保瀏覽器插件已安裝，並打開 `OBSNowPlayingOverlay.exe`
 4. 設定想要的字型以及視窗寬度
 5. 打開 OBS，新增 `視窗擷取` 來源，並按照下方圖片設定
