@@ -67,15 +67,15 @@ function start_transfer() {
 
             if (status == "playing") {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud' }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud' }));
             }
         } else if (hostname === 'open.spotify.com') {
             let data = navigator.mediaSession;
-            let status = query('.vnCew8qzJq3cVGlYFXRI', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Слушать' ? 'stopped' : 'playing'));
+            let status = query('.XrZ1iHVHAPMya3jkB2sa > button', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Слушать'|| e.getAttribute('aria-label') === '播放' ? 'stopped' : 'playing'));
             let cover = ''
             let title = ''
             let artists = ''
@@ -85,23 +85,23 @@ function start_transfer() {
                 artists = [data.metadata.artist]
             }
 
-            let progress = query('.playback-bar__progress-time-elapsed', e => timestamp_to_ms(e.textContent));
-            let duration = query('.npFSJSO1wsu3mEEGb5bh', e => timestamp_to_ms(e.textContent));
+            let progress = query('.IPbBrI6yF4zhaizFmrg6', e => timestamp_to_ms(e.textContent));
+            let duration = query('.DSdahCi0SDG37V9ZmsGO', e => timestamp_to_ms(e.textContent));
             let song_link = ''
             if (document.querySelectorAll('a[aria-label][data-context-item-type="track"]').length > 0) {
                 song_link = 'https://open.spotify.com/track/' + decodeURIComponent(document.querySelectorAll('a[aria-label][data-context-item-type="track"]')[0].href).split(':').slice(-1)[0];
             }
 
-            if (title === null)
+            if (title === '')
                 return;
 
             if (status == "playing") {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify' }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify' }));
             }
         } else if (hostname === 'www.youtube.com') {
             if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
@@ -138,11 +138,11 @@ function start_transfer() {
 
             if (status == 'playing' && progress > 0) {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube' }));
             }
             else if (status == 'paused' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube' }));
             }
         } else if (hostname === 'music.youtube.com') {
             if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
@@ -169,11 +169,11 @@ function start_transfer() {
 
             if (status == 'playing') {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music' }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music' }));
             }
         }
     }, 500);

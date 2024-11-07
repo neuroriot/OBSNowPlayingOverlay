@@ -27,5 +27,8 @@ namespace OBSNowPlayingOverlay
 
         [JsonProperty("song_link")]
         public string SongLink { get; set; }
+
+        [JsonProperty("platform")]
+        public string Platform { get; set; }
     }
 }

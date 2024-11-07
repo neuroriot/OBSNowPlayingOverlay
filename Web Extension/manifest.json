@@ -4,6 +4,8 @@
   "description": "用來發送資料給 OBSNowPlayingOverlay 的工具",
   "manifest_version": 3,
   "author": "孤之界 (修改自 Tizhproger)",
+  "homepage_url": "https://github.com/konnokai/OBSNowPlayingOverlay",
+  "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": [

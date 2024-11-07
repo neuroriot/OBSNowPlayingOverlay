@@ -16,7 +16,9 @@ using ToastNotifications.Lifetime;
 using ToastNotifications.Messages;
 using ToastNotifications.Position;
 using WebSocketSharp.Server;
+using Color = System.Windows.Media.Color;
 using Image = SixLabors.ImageSharp.Image;
+using Rectangle = SixLabors.ImageSharp.Rectangle;
 
 namespace OBSNowPlayingOverlay
 {
@@ -134,15 +136,15 @@ namespace OBSNowPlayingOverlay
                         // 若圖片的寬比較大，就由寬來裁切
                         if (image.Width > image.Height)
                         {
-                            int x = image.Width / 4, cropWidth = image.Width / 2;
+                            int x = image.Width / 2 - image.Height / 2;
                             image.Mutate(i => i
-                                .Crop(new Rectangle(x, 0, cropWidth, image.Height)));
+                                .Crop(new Rectangle(x, 0, image.Height, image.Height)));
                         }
                         else
                         {
-                            int y = image.Height / 4, cropHeight = image.Height / 2;
+                            int y = image.Height / 2 - image.Width / 2;
                             image.Mutate(i => i
-                                .Crop(new Rectangle(0, y, image.Width, cropHeight)));
+                                .Crop(new Rectangle(0, y, image.Width, image.Width)));
                         }
                     }
 
@@ -165,7 +167,7 @@ namespace OBSNowPlayingOverlay
                     var color = image[0, 0];
                     bg.Dispatcher.Invoke(() =>
                     {
-                        bg.Background = new SolidColorBrush(System.Windows.Media.Color.FromArgb(color.A, color.R, color.G, color.B));
+                        bg.Background = new SolidColorBrush(Color.FromArgb(color.A, color.R, color.G, color.B));
                     });
                 }
                 catch (Exception ex)
@@ -175,9 +177,31 @@ namespace OBSNowPlayingOverlay
                 }
             }
 
+            Color progressColor;
+            switch (nowPlayingJson.Platform)
+            {
+                case "youtube":
+                case "youtube_music":
+                    progressColor = Color.FromRgb(255, 0, 51);
+                    break;
+                case "soundcloud":
+                    progressColor = Color.FromRgb(255, 85, 0);
+                    break;
+                case "spotify":
+                    progressColor = Color.FromRgb(30, 215, 96);
+                    break;
+                default:
+                    progressColor = Color.FromRgb(255, 0, 51);
+                    break;
+            }
+
             rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
             lab_Subtitle.Dispatcher.Invoke(() => { lab_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
-            pb_Process.Dispatcher.Invoke(() => { pb_Process.Value = (nowPlayingJson.Progress / nowPlayingJson.Duration) * 100; });
+            pb_Process.Dispatcher.Invoke(() =>
+            {
+                pb_Process.Foreground = new SolidColorBrush(progressColor);
+                pb_Process.Value = (nowPlayingJson.Progress / nowPlayingJson.Duration) * 100;
+            });
 
             grid_Pause.Dispatcher.Invoke(() =>
             {
