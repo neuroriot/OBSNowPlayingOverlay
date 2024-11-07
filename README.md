@@ -20,6 +20,17 @@
 
 ![OBSDone](Docs/OBSDone.png)
 
+# 如何新增字型
+
+![HowToAddFont](Docs/HowToAddFont.png)
+
+有兩種方式
+
+1. 直接把字型安裝到系統內，之後到設定視窗勾選 `載入系統安裝字型`
+2. 將 ttf 或 otf 字型檔案丟到程式的 `Fonts` 資料夾，然後重開程式讓字型載入即可
+
+弄完之後記得要選擇想用的字型
+
 # 如何關閉程式
 
 ![CloseProgram](Docs/CloseProgram.png)
