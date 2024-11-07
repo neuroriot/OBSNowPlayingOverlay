@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:OBSNowPlayingOverlay"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
-        Title="正在播放" Height="120" Width="400" Icon="/Assets/icon.png" Closing="Window_Closing" AllowsTransparency="True" WindowStyle="None" Background="{x:Null}">
+        Title="正在播放 - 主視窗" Height="120" Width="400" Icon="/Assets/icon.png" Closing="Window_Closing" AllowsTransparency="True" WindowStyle="None" Background="{x:Null}">
     <Grid x:Name="grid" MouseMove="grid_MouseMove">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="120"/>
@@ -20,13 +20,13 @@
                     <RowDefinition Height="30"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                
-                <hc:RunningBlock x:Name="rb_Title" Content="標題" Margin="16,0,8,0" VerticalAlignment="Center" Padding="0,0,0,0" IsEnabled="False" AutoRun="True" Speed="50" Grid.ColumnSpan="1" BorderBrush="{x:Null}" Foreground="White" Grid.Column="1" FontSize="36" />
-                <Label x:Name="lab_Subtitle" Content="作者" Margin="16,0,8,0" Grid.Row="1" Padding="0,0,0,0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Grid.ColumnSpan="1" Background="{x:Null}" BorderBrush="{x:Null}" Foreground="White" Grid.Column="1" FontSize="20"/>
+
+                <hc:RunningBlock x:Name="rb_Title" Content="標題" Margin="16,0,8,0" VerticalAlignment="Center" Padding="0,0,0,0" IsEnabled="False" AutoRun="True" Speed="50" Grid.ColumnSpan="1" BorderBrush="{x:Null}" Foreground="White" Grid.Column="1" FontSize="36" FontFamily="cjkFonts 全瀨體"/>
+                <hc:RunningBlock x:Name="rb_Subtitle" Content="作者" Margin="16,0,8,0" Grid.Row="1" Padding="0,0,0,0" IsEnabled="False" AutoRun="True" Speed="50" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Grid.ColumnSpan="1" BorderBrush="{x:Null}" Foreground="White" Grid.Column="1" FontSize="20" FontFamily="cjkFonts 全瀨體"/>
                 <ProgressBar x:Name="pb_Process" Style="{DynamicResource ProgressBarFlat}" Grid.Row="2" Grid.ColumnSpan="1" VerticalAlignment="Center" Foreground="Red" Background="#FF8C8C8C" Height="2" Grid.Column="1" Margin="16,0,8,0"/>
             </Grid>
         </Border>
-        
+
         <Image x:Name="img_Cover" Width="120" Height="120" Source="/Assets/record-player.png" Stretch="UniformToFill">
             <Image.Clip>
                 <RectangleGeometry RadiusX="8" RadiusY="8" Rect="0,0,120,120"/>
@@ -35,6 +35,6 @@
         <Grid x:Name="grid_Pause" Visibility="Hidden">
             <Rectangle Fill="Black" Opacity="0.5" />
             <Image Width="120" Height="120" Source="/Assets/pause.png" Opacity="0.75" />
-        </Grid>        
+        </Grid>
     </Grid>
 </Window>

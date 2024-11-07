@@ -1,0 +1,46 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:OBSNowPlayingOverlay"
+        xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="OBSNowPlayingOverlay.SettingWindow"
+        mc:Ignorable="d"
+        Title="正在播放 - 設定視窗" Height="190" Width="450" Closing="Window_Closing" MinHeight="160" MinWidth="450">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="135"/>
+        </Grid.ColumnDefinitions>
+
+        <Label Content="字型" HorizontalAlignment="Stretch" VerticalAlignment="Center" Padding="0,5,0,5" Margin="10,0,10,0"/>
+        <!--https://www.hanselman.com/blog/learning-wpf-with-babysmash-customer-feedback-and-a-wpf-font-combobox-->
+        <ComboBox x:Name="cb_FontChooser" VerticalAlignment="Center" SelectionChanged="cb_FontChooser_SelectionChanged" Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Margin="0,0,10,0">
+            <ComboBox.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <VirtualizingStackPanel />
+                </ItemsPanelTemplate>
+            </ComboBox.ItemsPanel>
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Key}" FontFamily="{Binding Value}" FontSize="18"/>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+        <CheckBox x:Name="chkb_LoadSystemFonts" Grid.Column="3" Content="載入系統安裝字型" Click="chkb_LoadSystemFonts_Click" HorizontalAlignment="Center" Grid.Row="0" Grid.ColumnSpan="1" Margin="0,0,10,0" />
+
+        <Label Content="主介面寬度" HorizontalAlignment="Stretch" Margin="10,0,10,0" Grid.Row="1" Padding="0,5,0,5"/>
+        <hc:NumericUpDown x:Name="num_MainWindowWidth" Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" Maximum="1000" Minimum="400" Value="400" Grid.ColumnSpan="1" ValueChanged="num_MainWindowWidth_ValueChanged" Increment="25"/>
+
+        <Label Content="跑馬燈速度" HorizontalAlignment="Stretch" Margin="10,0,10,0" Grid.Row="2" Padding="0,5,0,5" Grid.Column="0"/>
+        <hc:NumericUpDown x:Name="num_MarqueeSpeed" Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" Maximum="200" Minimum="25" Value="50" Grid.ColumnSpan="1" ValueChanged="num_MarqueeSpeed_ValueChanged" Increment="5"/>
+    </Grid>
+</Window>

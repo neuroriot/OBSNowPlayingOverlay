@@ -6,40 +6,41 @@ namespace OBSNowPlayingOverlay.WebSocketBehavior
 {
     public class NowPlaying : WebSocketSharp.Server.WebSocketBehavior
     {
-
         protected override void OnError(ErrorEventArgs e)
         {
             base.OnError(e);
 
-            AnsiConsole.WriteException(e.Exception, ExceptionFormats.ShortenEverything);
+            //AnsiConsole.WriteException(e.Exception, ExceptionFormats.ShortenEverything);
         }
 
         protected override void OnMessage(MessageEventArgs e)
         {
-            base.OnMessage(e);
-
-            if (e.IsPing)
-                return;
-
-            if (string.IsNullOrEmpty(e.Data))
-                return;
-
-            if (e.Data.StartsWith("{") && e.Data.EndsWith("}"))
+            try
             {
-                try
+                base.OnMessage(e);
+
+                if (e.IsPing)
+                    return;
+
+                if (string.IsNullOrEmpty(e.Data))
+                    return;
+
+                if (e.Data.StartsWith("{") && e.Data.EndsWith("}"))
                 {
                     NowPlayingJson nowPlaying = JsonConvert.DeserializeObject<NowPlayingJson>(e.Data)!;
                     MainWindow.MsgQueue.TryAdd(nowPlaying);
                 }
-                catch (Exception ex)
+                else
                 {
-                    AnsiConsole.MarkupLineInterpolated($"[olive]{e.Data}[/]");
-                    AnsiConsole.WriteException(ex, ExceptionFormats.Default);
+                    AnsiConsole.MarkupLineInterpolated($"[dodgerblue2]{e.Data}[/]");
                 }
             }
-            else
+            catch (OperationCanceledException) { }
+            catch (InvalidOperationException) { }
+            catch (Exception ex)
             {
-                AnsiConsole.MarkupLineInterpolated($"[dodgerblue2]{e.Data}[/]");
+                AnsiConsole.MarkupLineInterpolated($"[olive]{e.Data}[/]");
+                AnsiConsole.WriteException(ex, ExceptionFormats.Default);
             }
         }
     }

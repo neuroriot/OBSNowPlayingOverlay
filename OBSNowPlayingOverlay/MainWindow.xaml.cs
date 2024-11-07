@@ -1,21 +1,14 @@
-﻿using OBSNowPlayingOverlay.WebSocketBehavior;
-using SixLabors.ImageSharp;
+﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Quantization;
 using Spectre.Console;
 using System.Collections.Concurrent;
-using System.Net;
 using System.Net.Http;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using ToastNotifications;
-using ToastNotifications.Lifetime;
-using ToastNotifications.Messages;
-using ToastNotifications.Position;
-using WebSocketSharp.Server;
 using Color = System.Windows.Media.Color;
 using Image = SixLabors.ImageSharp.Image;
 using Rectangle = SixLabors.ImageSharp.Rectangle;
@@ -27,32 +20,14 @@ namespace OBSNowPlayingOverlay
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly Notifier _notifier;
-        private readonly HttpClient _httpClient;
-
-        private string latestTitle = "";
-        private WebSocketServer? wsServer;
-
         public static BlockingCollection<NowPlayingJson> MsgQueue { get; } = new();
+
+        private readonly HttpClient _httpClient;
+        private string latestTitle = "";
 
         public MainWindow()
         {
             InitializeComponent();
-
-            _notifier = new Notifier(cfg =>
-            {
-                cfg.PositionProvider = new WindowPositionProvider(
-                    parentWindow: Application.Current.MainWindow,
-                    corner: Corner.TopRight,
-                    offsetX: 10,
-                    offsetY: 10);
-
-                cfg.LifetimeSupervisor = new TimeAndCountBasedLifetimeSupervisor(
-                    notificationLifetime: TimeSpan.FromSeconds(3),
-                    maximumNotificationCount: MaximumNotificationCount.FromCount(2));
-
-                cfg.Dispatcher = Application.Current.Dispatcher;
-            });
 
             _httpClient = new(new HttpClientHandler()
             {
@@ -61,49 +36,34 @@ namespace OBSNowPlayingOverlay
 
             Task.Run(async () =>
             {
-                while (!MsgQueue.IsCompleted)
+                try
                 {
-                    NowPlayingJson data;
-
-                    try
+                    while (!MsgQueue.IsCompleted)
                     {
-                        data = MsgQueue.Take();
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        AnsiConsole.WriteLine("Adding was completed!");
-                        break;
-                    }
+                        NowPlayingJson data;
 
-                    await UpdateNowPlayingDataAsync(data);
+                        try
+                        {
+                            data = MsgQueue.Take();
+                        }
+                        catch (InvalidOperationException)
+                        {
+                            break;
+                        }
+
+                        await UpdateNowPlayingDataAsync(data);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.WriteException(ex);
                 }
             });
-
-            try
-            {
-                wsServer = new WebSocketServer(IPAddress.Loopback, 52998);
-                wsServer.AddWebSocketService<NowPlaying>("/");
-                wsServer.Start();
-            }
-            catch (System.Net.Sockets.SocketException ex) when (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse)
-            {
-                _notifier.ShowError("伺服器啟動失敗，請確認是否有其他應用程式使用 TCP 52998 Port");
-                AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
-                return;
-            }
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            try
-            {
-                wsServer?.Stop();
-                wsServer = null;
-            }
-            catch (Exception)
-            {
-                // Ignore
-            }
+            MsgQueue.CompleteAdding();
         }
 
         private void grid_MouseMove(object sender, MouseEventArgs e)
@@ -172,31 +132,31 @@ namespace OBSNowPlayingOverlay
                 }
                 catch (Exception ex)
                 {
-                    _notifier.ShowError("封面圖下載失敗，可能是找不到圖片");
+                    AnsiConsole.MarkupLine("[red]封面圖下載失敗，可能是找不到圖片[/]");
                     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
                 }
             }
 
-            Color progressColor;
-            switch (nowPlayingJson.Platform)
+            Color progressColor = Color.FromRgb(255, 0, 51);
+            if (!string.IsNullOrEmpty(nowPlayingJson.Platform))
             {
-                case "youtube":
-                case "youtube_music":
-                    progressColor = Color.FromRgb(255, 0, 51);
-                    break;
-                case "soundcloud":
-                    progressColor = Color.FromRgb(255, 85, 0);
-                    break;
-                case "spotify":
-                    progressColor = Color.FromRgb(30, 215, 96);
-                    break;
-                default:
-                    progressColor = Color.FromRgb(255, 0, 51);
-                    break;
+                switch (nowPlayingJson.Platform)
+                {
+                    case "youtube":
+                    case "youtube_music":
+                        progressColor = Color.FromRgb(255, 0, 51);
+                        break;
+                    case "soundcloud":
+                        progressColor = Color.FromRgb(255, 85, 0);
+                        break;
+                    case "spotify":
+                        progressColor = Color.FromRgb(30, 215, 96);
+                        break;
+                }
             }
 
             rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
-            lab_Subtitle.Dispatcher.Invoke(() => { lab_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
+            rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
             pb_Process.Dispatcher.Invoke(() =>
             {
                 pb_Process.Foreground = new SolidColorBrush(progressColor);
@@ -206,6 +166,37 @@ namespace OBSNowPlayingOverlay
             grid_Pause.Dispatcher.Invoke(() =>
             {
                 grid_Pause.Visibility = nowPlayingJson.Status == "playing" ? Visibility.Hidden : Visibility.Visible;
+            });
+        }
+
+        internal void SetFont(FontFamily fontFamily)
+        {
+            rb_Title.Dispatcher.Invoke(() => rb_Title.FontFamily = fontFamily);
+            rb_Subtitle.Dispatcher.Invoke(() => rb_Subtitle.FontFamily = fontFamily);
+        }
+
+        internal void SetWindowWidth(int width)
+        {
+            if (width < 400 || width > 1000)
+                return;
+
+            Dispatcher.Invoke(() => { Width = width; });
+        }
+
+        internal void SetMarqueeSpeed(int speed)
+        {
+            if (speed < 25 || speed > 200)
+                return;
+
+            rb_Title.Dispatcher.Invoke(() =>
+            {
+                rb_Title.Speed = speed;
+                rb_Title.OnApplyTemplate(); // 需要執行這類方法來觸發更新
+            });
+            rb_Subtitle.Dispatcher.Invoke(() =>
+            {
+                rb_Subtitle.Speed = speed;
+                rb_Subtitle.OnApplyTemplate();
             });
         }
 
