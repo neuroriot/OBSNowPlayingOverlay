@@ -17,7 +17,7 @@
 
 # 如何使用
 
-1. 安裝瀏覽器插件 (還未審核完成，可自行使用開發人員模式安裝 Web Extension 內的資料，審核完之後會替換成商店連結，[參考安裝方式](https://zenreal.github.io/posts/58580/))
+1. 安裝[瀏覽器插件](https://chromewebstore.google.com/detail/obs-%E6%AD%A3%E5%9C%A8%E6%92%AD%E6%94%BE/bbaajjiddghleiifnnhagkgjfihnkphe)
 2. [點我下載](https://github.com/konnokai/OBSNowPlayingOverlay/releases/latest/download/OBSNowPlayingOverlay.zip) 最新版的 `OBSNowPlayingOverlay.zip` 壓縮包並解壓縮
 3. 確保瀏覽器插件已安裝，並打開 `OBSNowPlayingOverlay.exe` (應該會提示要安裝 .NET 6 Desktop Runtime，如果沒有的話就下載 [這個](https://dotnet.microsoft.com/zh-tw/download/dotnet/thank-you/runtime-desktop-6.0.35-windows-x64-installer) 來安裝)
 4. 設定想要的字型以及視窗寬度
