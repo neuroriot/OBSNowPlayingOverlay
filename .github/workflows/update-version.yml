@@ -1,0 +1,49 @@
+name: Update Version
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  get_version_job:
+    runs-on: ubuntu-latest # Cannot use windows
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Get Version From C# Project File
+      id: get-version
+      uses: KinsonDigital/VersionMiner@v1.0.0
+      with:
+        repo-owner: konnokai
+        repo-name: OBSNowPlayingOverlay
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        branch-name: master
+        file-format: xml # Not case sensitive
+        file-path: "OBSNowPlayingOverlay/OBSNowPlayingOverlay.csproj"
+        version-keys: Version
+
+    - name: Print Version From File
+      id: print-output
+      run: echo "Now version is ${{ steps.get-version.outputs.version }}"
+
+    - name: Update version in XML
+      run: |
+        version=${{ steps.get-version.outputs.version }}
+        sed -i "s/<version>.*<\/version>/<version>${version}<\/version>/" Docs/Update.xml
+
+    - name: Configure git
+      run: |
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+
+    - name: Commit changes
+      run: |
+        git add Docs/Update.xml
+        git commit -m "feat: 更新版本 ${{ steps.get-version.outputs.version }}"
+
+    - name: Push changes
+      uses: ad-m/github-push-action@v0.8.0
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: main
