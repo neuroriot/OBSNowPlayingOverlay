@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:OBSNowPlayingOverlay"
         xmlns:hc="https://handyorg.github.io/handycontrol" x:Class="OBSNowPlayingOverlay.SettingWindow"
         mc:Ignorable="d"
-        Title="正在播放 - 設定視窗" Height="190" Width="450" Closing="Window_Closing" MinHeight="160" MinWidth="450">
+        Title="正在播放 - 設定視窗" Height="190" Width="450" Closing="Window_Closing" MinHeight="160" MinWidth="450" WindowStartupLocation="CenterScreen">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="50"/>
@@ -39,8 +39,9 @@
 
         <Label Content="主介面寬度" HorizontalAlignment="Stretch" Margin="10,0,10,0" Grid.Row="1" Padding="0,5,0,5"/>
         <hc:NumericUpDown x:Name="num_MainWindowWidth" Grid.Column="1" Grid.Row="1" VerticalAlignment="Center" Maximum="1000" Minimum="400" Value="400" Grid.ColumnSpan="1" ValueChanged="num_MainWindowWidth_ValueChanged" Increment="25"/>
+        <CheckBox x:Name="chkb_UseCoverImageAsBackground" Grid.Column="2" Content="使用模糊過的封面圖片來當作背景" Margin="10,0,10,0" Grid.Row="1" Grid.ColumnSpan="2" Click="chkb_UseCoverImageAsBackground_Click" ToolTip="若未勾則會使用封面圖的主顏色來當背景。需要等歌曲變換後才會生效" Cursor="Help"/>
 
         <Label Content="跑馬燈速度" HorizontalAlignment="Stretch" Margin="10,0,10,0" Grid.Row="2" Padding="0,5,0,5" Grid.Column="0"/>
-        <hc:NumericUpDown x:Name="num_MarqueeSpeed" Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" Maximum="200" Minimum="25" Value="50" Grid.ColumnSpan="1" ValueChanged="num_MarqueeSpeed_ValueChanged" Increment="5"/>
+        <hc:NumericUpDown x:Name="num_MarqueeSpeed" Grid.Column="1" Grid.Row="2" VerticalAlignment="Center" Maximum="200" Minimum="25" Value="50" Grid.ColumnSpan="1" ValueChanged="num_MarqueeSpeed_ValueChanged" Increment="5"/>        
     </Grid>
 </Window>

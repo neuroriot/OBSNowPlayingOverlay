@@ -10,7 +10,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Color = System.Windows.Media.Color;
+using FontFamily = System.Windows.Media.FontFamily;
 using Image = SixLabors.ImageSharp.Image;
+using ImageBrush = System.Windows.Media.ImageBrush;
 using Rectangle = SixLabors.ImageSharp.Rectangle;
 
 namespace OBSNowPlayingOverlay
@@ -24,6 +26,7 @@ namespace OBSNowPlayingOverlay
 
         private readonly HttpClient _httpClient;
         private string latestTitle = "";
+        private bool isUseCoverImageAsBackground = false;
 
         public MainWindow()
         {
@@ -74,6 +77,14 @@ namespace OBSNowPlayingOverlay
             }
         }
 
+        private void Window_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (e.LeftButton == MouseButtonState.Pressed)
+            {
+                DragMove();
+            }
+        }
+
         public async Task UpdateNowPlayingDataAsync(NowPlayingJson nowPlayingJson)
         {
             if (latestTitle != nowPlayingJson.Title)
@@ -82,53 +93,74 @@ namespace OBSNowPlayingOverlay
                 AnsiConsole.MarkupLineInterpolated($"歌曲切換: [green]{nowPlayingJson.Artists.FirstOrDefault() ?? "無"} - {nowPlayingJson.Title}[/]");
                 AnsiConsole.MarkupLineInterpolated($"歌曲連結: [green]{nowPlayingJson.SongLink}[/]");
 
+                rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
+                rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
+
                 try
                 {
                     AnsiConsole.MarkupLineInterpolated($"開始下載封面: [green]{nowPlayingJson.Cover}[/]");
 
                     using var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
                     using var image = await Image.LoadAsync<Rgba32>(imageStream);
+                    using var coverImage = image.Clone();
 
                     // 若圖片非正方形才進行裁切
-                    if (image.Width != image.Height)
+                    if (coverImage.Width != coverImage.Height)
                     {
                         // 將圖片從正中間裁切
                         // 若圖片的寬比較大，就由寬來裁切
-                        if (image.Width > image.Height)
+                        if (coverImage.Width > coverImage.Height)
                         {
-                            int x = image.Width / 2 - image.Height / 2;
-                            image.Mutate(i => i
-                                .Crop(new Rectangle(x, 0, image.Height, image.Height)));
+                            int x = coverImage.Width / 2 - coverImage.Height / 2;
+                            coverImage.Mutate(i => i
+                                .Crop(new Rectangle(x, 0, coverImage.Height, coverImage.Height)));
                         }
                         else
                         {
-                            int y = image.Height / 2 - image.Width / 2;
-                            image.Mutate(i => i
-                                .Crop(new Rectangle(0, y, image.Width, image.Width)));
+                            int y = coverImage.Height / 2 - coverImage.Width / 2;
+                            coverImage.Mutate(i => i
+                                .Crop(new Rectangle(0, y, coverImage.Width, coverImage.Width)));
                         }
                     }
 
-                    // 設定圖片
+                    // 設定封面圖片
                     img_Cover.Dispatcher.Invoke(() =>
                     {
-                        img_Cover.Source = GetBMP(image);
+                        img_Cover.Source = GetBMP(coverImage);
                     });
 
-                    // 取得圖片的主要顏色
-                    // https://gist.github.com/JimBobSquarePants/12e0ef5d904d03110febea196cf1d6ee
-                    image.Mutate(x => x
-                        // Scale the image down preserving the aspect ratio. This will speed up quantization.
-                        // We use nearest neighbor as it will be the fastest approach.
-                        .Resize(new ResizeOptions() { Sampler = KnownResamplers.NearestNeighbor, Size = new SixLabors.ImageSharp.Size(128, 0) })
-                        // Reduce the color palette to 1 color without dithering.
-                        .Quantize(new OctreeQuantizer(new QuantizerOptions { MaxColors = 1 })));
-
-                    // 設定背景顏色
-                    var color = image[0, 0];
-                    bg.Dispatcher.Invoke(() =>
+                    if (isUseCoverImageAsBackground)
                     {
-                        bg.Background = new SolidColorBrush(Color.FromArgb(color.A, color.R, color.G, color.B));
-                    });
+                        // 直接將圖片模糊化
+                        image.Mutate(x => x.GaussianBlur(12));
+
+                        bg.Dispatcher.Invoke(() =>
+                        {
+                            bg.Background = new ImageBrush()
+                            {
+                                ImageSource = GetBMP(image),
+                                Stretch = Stretch.UniformToFill
+                            };
+                        });
+                    }
+                    else
+                    {
+                        // 取得圖片的主要顏色
+                        // https://gist.github.com/JimBobSquarePants/12e0ef5d904d03110febea196cf1d6ee
+                        image.Mutate(x => x
+                            // Scale the image down preserving the aspect ratio. This will speed up quantization.
+                            // We use nearest neighbor as it will be the fastest approach.
+                            .Resize(new ResizeOptions() { Sampler = KnownResamplers.NearestNeighbor, Size = new SixLabors.ImageSharp.Size(128, 0) })
+                            // Reduce the color palette to 1 color without dithering.
+                            .Quantize(new OctreeQuantizer(new QuantizerOptions { MaxColors = 1 })));
+
+                        // 設定背景顏色
+                        var color = image[0, 0];
+                        bg.Dispatcher.Invoke(() =>
+                        {
+                            bg.Background = new SolidColorBrush(Color.FromArgb(color.A, color.R, color.G, color.B));
+                        });
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -155,18 +187,22 @@ namespace OBSNowPlayingOverlay
                 }
             }
 
-            rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
-            rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
-            pb_Process.Dispatcher.Invoke(() =>
+            if (double.IsNormal(nowPlayingJson.Progress) && double.IsNormal(nowPlayingJson.Duration))
             {
-                pb_Process.Foreground = new SolidColorBrush(progressColor);
-                pb_Process.Value = (nowPlayingJson.Progress / nowPlayingJson.Duration) * 100;
-            });
+                pb_Process.Dispatcher.Invoke(() =>
+                {
+                    pb_Process.Foreground = new SolidColorBrush(progressColor);
+                    pb_Process.Value = (nowPlayingJson.Progress / nowPlayingJson.Duration) * 100;
+                });
+            }
 
-            grid_Pause.Dispatcher.Invoke(() =>
+            if (!string.IsNullOrEmpty(nowPlayingJson.Status))
             {
-                grid_Pause.Visibility = nowPlayingJson.Status == "playing" ? Visibility.Hidden : Visibility.Visible;
-            });
+                grid_Pause.Dispatcher.Invoke(() =>
+                {
+                    grid_Pause.Visibility = nowPlayingJson.Status == "playing" ? Visibility.Hidden : Visibility.Visible;
+                });
+            }
         }
 
         internal void SetFont(FontFamily fontFamily)
@@ -198,6 +234,11 @@ namespace OBSNowPlayingOverlay
                 rb_Subtitle.Speed = speed;
                 rb_Subtitle.OnApplyTemplate();
             });
+        }
+
+        internal void SetUseCoverImageAsBackground(bool useCoverImage)
+        {
+            isUseCoverImageAsBackground = useCoverImage;
         }
 
         // https://github.com/SixLabors/ImageSharp/issues/531#issuecomment-2275170928

@@ -104,7 +104,13 @@ namespace OBSNowPlayingOverlay
                 chkb_LoadSystemFonts.IsChecked = _config.IsLoadSystemFonts;
             });
 
+            chkb_UseCoverImageAsBackground.Dispatcher.Invoke(() =>
+            {
+                chkb_UseCoverImageAsBackground.IsChecked = _config.IsUseCoverImageAsBackground;
+            });
+
             ReloadFonts(_config.IsLoadSystemFonts);
+            _mainWindow.SetUseCoverImageAsBackground(_config.IsUseCoverImageAsBackground);
 
             cb_FontChooser.Dispatcher.Invoke(() =>
             {
@@ -228,6 +234,14 @@ namespace OBSNowPlayingOverlay
 
                 _mainWindow.SetMarqueeSpeed(speed);
             }
+        }
+
+        private void chkb_UseCoverImageAsBackground_Click(object sender, RoutedEventArgs e)
+        {
+            bool isUseCoverImageAsBackground = chkb_UseCoverImageAsBackground.IsChecked.HasValue && chkb_UseCoverImageAsBackground.IsChecked.Value;
+            _config.IsUseCoverImageAsBackground = isUseCoverImageAsBackground;
+
+            _mainWindow.SetUseCoverImageAsBackground(isUseCoverImageAsBackground);
         }
     }
 }

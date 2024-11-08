@@ -6,7 +6,10 @@
         xmlns:local="clr-namespace:OBSNowPlayingOverlay"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
-        Title="正在播放 - 主視窗" Height="120" Width="400" Icon="/Assets/icon.png" Closing="Window_Closing" AllowsTransparency="True" WindowStyle="None" Background="{x:Null}">
+        Title="正在播放 - 主視窗" Height="120" Width="400" Icon="/Assets/icon.png" Closing="Window_Closing" AllowsTransparency="True" WindowStyle="None" MouseMove="Window_MouseMove" Background="{x:Null}" Left="150" Top="150">
+    <Window.Resources>
+        <local:RectConverter x:Key="RectConverter"/>
+    </Window.Resources>
     <Grid x:Name="grid" MouseMove="grid_MouseMove">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="120"/>
@@ -27,9 +30,16 @@
             </Grid>
         </Border>
 
-        <Image x:Name="img_Cover" Width="120" Height="120" Source="/Assets/record-player.png" Stretch="UniformToFill">
+        <Image x:Name="img_Cover" Source="/Assets/record-player.png" Width="120" Height="120" Stretch="UniformToFill">
             <Image.Clip>
-                <RectangleGeometry RadiusX="8" RadiusY="8" Rect="0,0,120,120"/>
+                <RectangleGeometry RadiusX="8" RadiusY="8">
+                    <RectangleGeometry.Rect>
+                        <MultiBinding Converter="{StaticResource RectConverter}">
+                            <Binding ElementName="img_Cover" Path="ActualWidth"/>
+                            <Binding ElementName="img_Cover" Path="ActualHeight"/>
+                        </MultiBinding>
+                    </RectangleGeometry.Rect>
+                </RectangleGeometry>
             </Image.Clip>
         </Image>
         <Grid x:Name="grid_Pause" Visibility="Hidden">

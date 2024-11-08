@@ -2,9 +2,18 @@
 
 ![MainWindows](Docs/MainWindow.png)
 
+![MainWindows2](Docs/MainWindow2.png)
+
 一個可以顯示 YouTube (包含 YouTube Music)、SoundCloud、Spotify 播放狀態的小工具
 
 起因是因為我推 ([998rrr](https://www.twitch.tv/998rrr)) 的 NowPlaying 軟體出現問題，正好拿來練手寫個工具看看
+
+# 特色
+
+- 顯示播放狀態
+- 緩慢新增的可自訂化介面
+- 自動更新 (v1.0.1 新增)
+- ~~還有些我抓不到的 Bug~~
 
 # 如何使用
 
