@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using AutoUpdaterDotNET;
+using Newtonsoft.Json;
 using OBSNowPlayingOverlay.WebSocketBehavior;
 using Spectre.Console;
 using System.Collections.ObjectModel;
@@ -23,10 +24,40 @@ namespace OBSNowPlayingOverlay
         private readonly ObservableCollection<KeyValuePair<string, FontFamily>> _fontFamilies = new();
 
         private WebSocketServer? _wsServer;
+       private readonly TaskCompletionSource<bool> _updateCheckTask = new();
 
         public SettingWindow()
         {
             InitializeComponent();
+
+            try
+            {
+                AutoUpdater.RunUpdateAsAdmin = false;
+                AutoUpdater.HttpUserAgent = "OBSNowPlayingOverlay";
+                AutoUpdater.SetOwner(this);
+                AutoUpdater.CheckForUpdateEvent += (e) =>
+                {
+                    if (e.Error != null)
+                    {
+                        AnsiConsole.WriteException(e.Error);
+                    }
+                    else if (e.IsUpdateAvailable)
+                    {
+                        AnsiConsole.MarkupLine("[green]發現更新![/]");
+                        AutoUpdater.ShowUpdateForm(e);
+                    }
+                    else
+                    {
+                        AnsiConsole.MarkupLine("[darkorange3]沒有需要更新[/]");
+                    }
+                };
+
+                AutoUpdater.Start("https://raw.githubusercontent.com/konnokai/OBSNowPlayingOverlay/refs/heads/master/Docs/Update.xml");
+            }
+            catch (Exception ex)
+            {
+                AnsiConsole.WriteException(ex);
+            }
 
             if (File.Exists("Config.json"))
             {
