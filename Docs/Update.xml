@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<item>
+  <version>1.0.1.0</version>
+  <url>https://github.com/konnokai/OBSNowPlayingOverlay/releases/latest/download/OBSNowPlayingOverlay.zip</url>
+  <changelog>https://github.com/konnokai/OBSNowPlayingOverlay/releases</changelog>
+  <mandatory>false</mandatory>
+</item>
