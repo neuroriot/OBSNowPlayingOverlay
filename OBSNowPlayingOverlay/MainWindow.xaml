@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:OBSNowPlayingOverlay"
         xmlns:hc="https://handyorg.github.io/handycontrol"
         mc:Ignorable="d"
-        Title="正在播放 - 主視窗" Height="120" Width="400" Icon="/Assets/icon.png" Closing="Window_Closing" AllowsTransparency="True" WindowStyle="None" MouseMove="Window_MouseMove" Background="{x:Null}" Left="150" Top="150">
+        Title="正在播放 - 主視窗" Height="120" Width="400" Icon="/Assets/icon.png" Closing="Window_Closing" AllowsTransparency="True" WindowStyle="None" MouseMove="Window_MouseMove" Background="{x:Null}" Left="150" Top="150" ResizeMode="NoResize">
     <Window.Resources>
         <local:RectConverter x:Key="RectConverter"/>
     </Window.Resources>

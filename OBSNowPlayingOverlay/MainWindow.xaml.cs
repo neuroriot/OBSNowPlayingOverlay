@@ -187,7 +187,15 @@ namespace OBSNowPlayingOverlay
                 }
             }
 
-            if (double.IsNormal(nowPlayingJson.Progress) && double.IsNormal(nowPlayingJson.Duration))
+            if (nowPlayingJson.IsLive) // 正在直播就直接把進度條切滿
+            {
+                pb_Process.Dispatcher.Invoke(() =>
+                {
+                    pb_Process.Foreground = new SolidColorBrush(progressColor);
+                    pb_Process.Value = 100;
+                });
+            }
+            else if (double.IsNormal(nowPlayingJson.Progress) && double.IsNormal(nowPlayingJson.Duration)) // 正常影片
             {
                 pb_Process.Dispatcher.Invoke(() =>
                 {
@@ -239,6 +247,7 @@ namespace OBSNowPlayingOverlay
         internal void SetUseCoverImageAsBackground(bool useCoverImage)
         {
             isUseCoverImageAsBackground = useCoverImage;
+            latestTitle = ""; // 清除最後保存的標題來觸發狀態更新
         }
 
         // https://github.com/SixLabors/ImageSharp/issues/531#issuecomment-2275170928

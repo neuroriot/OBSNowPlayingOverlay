@@ -7,6 +7,9 @@ namespace OBSNowPlayingOverlay
     // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
     public class NowPlayingJson
     {
+        [JsonProperty("guid")]
+        public string Guid { get; set; }
+
         [JsonProperty("cover")]
         public string Cover { get; set; }
 
@@ -30,5 +33,8 @@ namespace OBSNowPlayingOverlay
 
         [JsonProperty("platform")]
         public string Platform { get; set; }
+
+        [JsonProperty("is_live")]
+        public bool IsLive { get; set; }
     }
 }
