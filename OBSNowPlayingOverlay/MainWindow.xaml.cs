@@ -23,6 +23,7 @@ namespace OBSNowPlayingOverlay
     public partial class MainWindow : Window
     {
         public static BlockingCollection<NowPlayingJson> MsgQueue { get; } = new();
+        public static string LatestWebSocketGuid { get; set; } = "";
 
         private readonly HttpClient _httpClient;
         private string latestTitle = "";
@@ -87,6 +88,18 @@ namespace OBSNowPlayingOverlay
 
         public async Task UpdateNowPlayingDataAsync(NowPlayingJson nowPlayingJson)
         {
+            // 如果 LatestWebSocketGuid 為空，則代表有發送端已關閉，以最新接收到的發送端來更新狀態
+            if (LatestWebSocketGuid == "")
+            {
+                AnsiConsole.MarkupLineInterpolated($"最後的 Guid 為空，改由此 Guid 繼續更新狀態: [purple4_1]{nowPlayingJson.Guid}[/]");
+                LatestWebSocketGuid = nowPlayingJson.Guid;
+            }
+
+            // 檢測發送端的 Guid 是否為最新的，避免重複更新播放狀態
+            if (LatestWebSocketGuid != nowPlayingJson.Guid)
+                return;
+
+            // 檢測標題是否有變更
             if (latestTitle != nowPlayingJson.Title)
             {
                 latestTitle = nowPlayingJson.Title;

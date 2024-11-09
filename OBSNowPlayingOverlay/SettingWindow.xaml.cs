@@ -43,12 +43,12 @@ namespace OBSNowPlayingOverlay
                     }
                     else if (e.IsUpdateAvailable)
                     {
-                        AnsiConsole.MarkupLine("[green]發現更新![/]");
+                        AnsiConsole.MarkupLine("檢查更新: [green]發現更新![/]");
                         AutoUpdater.ShowUpdateForm(e);
                     }
                     else
                     {
-                        AnsiConsole.MarkupLine("[darkorange3]沒有需要更新[/]");
+                        AnsiConsole.MarkupLine("檢查更新: [darkorange3]沒有需要更新[/]");
                     }
                 };
 
@@ -87,13 +87,13 @@ namespace OBSNowPlayingOverlay
             catch (System.Net.Sockets.SocketException ex) when (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse)
             {
                 AnsiConsole.MarkupLine("[red]伺服器啟動失敗，請確認是否有其他應用程式使用 TCP 52998 Port[/]");
-                AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+                AnsiConsole.WriteException(ex);
                 return;
             }
             catch (Exception ex)
             {
                 AnsiConsole.MarkupLine("[red]伺服器啟動失敗，未知的錯誤，請向開發者詢問[/]");
-                AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
+                AnsiConsole.WriteException(ex);
                 return;
             }
 
