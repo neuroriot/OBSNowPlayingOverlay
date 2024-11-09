@@ -67,11 +67,11 @@ function start_transfer() {
 
             if (status == "playing") {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud', is_live: false }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud', is_live: false }));
             }
         } else if (hostname === 'open.spotify.com') {
             let data = navigator.mediaSession;
@@ -97,11 +97,11 @@ function start_transfer() {
 
             if (status == "playing") {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
             }
         } else if (hostname === 'www.youtube.com') {
             if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
@@ -127,6 +127,12 @@ function start_transfer() {
             let cover = navigator.mediaSession.metadata.artwork[0].src;
             let status = navigator.mediaSession.playbackState; // playbackState = playing, paused, none
             let song_link = window.location.href.split('&')[0];
+            let is_live = false;
+
+            // 檢測觀看的影片是否正在直播中
+            if (document.querySelector('#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > div.ytp-time-display.notranslate.ytp-live > button')) {
+                is_live = true;
+            }
 
             if (title === null)
                 return;
@@ -135,14 +141,14 @@ function start_transfer() {
             title = title.replace("(Official Music Video)", "");
             title = title.replace("(Original Video)", "");
             title = title.replace("(Original Mix)", "");
-
+            
             if (status == 'playing' && progress > 0) {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
             }
             else if (status == 'paused' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
             }
         } else if (hostname === 'music.youtube.com') {
             if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
@@ -169,11 +175,11 @@ function start_transfer() {
 
             if (status == 'playing') {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music', is_live: false }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music' }));
+                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music', is_live: false }));
             }
         }
     }, 500);
