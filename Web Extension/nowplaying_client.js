@@ -5,13 +5,14 @@ var hostname = window.location.hostname;
 const FETCH_URL = 'ws://localhost:52998/';
 var join_retry_time = 2000
 var isStopped = false;
+var guid = generateGuid();
 
 function join() {
     conn = new WebSocket(FETCH_URL);
 
     conn.addEventListener('open', function (event) {
         console.log('Connection to Now Playing server established');
-        conn.send("connected - " + hostname);
+        conn.send(`connected - ${hostname} (${guid})`);
         start_transfer();
         if (join_interval) {
             clearTimeout(join_interval);
@@ -27,6 +28,15 @@ function join() {
     });
 };
 
+// https://github.com/CyberJack/chrome_guid/blob/master/chrome_guid/src/guid_content.js
+function generateGuid()
+{
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+        return v.toString(16);
+    });
+    return uuid;
+}
 
 function query(target, fun, alt = null) {
     var element = document.querySelector(target);
@@ -67,11 +77,11 @@ function start_transfer() {
 
             if (status == "playing") {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud', is_live: false }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud', is_live: false }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud', is_live: false }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'soundcloud', is_live: false }));
             }
         } else if (hostname === 'open.spotify.com') {
             let data = navigator.mediaSession;
@@ -97,11 +107,11 @@ function start_transfer() {
 
             if (status == "playing") {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
             }
         } else if (hostname === 'www.youtube.com') {
             if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
@@ -144,11 +154,11 @@ function start_transfer() {
             
             if (status == 'playing' && progress > 0) {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
             }
             else if (status == 'paused' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
             }
         } else if (hostname === 'music.youtube.com') {
             if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
@@ -175,11 +185,11 @@ function start_transfer() {
 
             if (status == 'playing') {
                 isStopped = false;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music', is_live: false }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music', is_live: false }));
             }
             else if (status == 'stopped' && !isStopped) {
                 isStopped = true;
-                conn.send(JSON.stringify({ cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music', is_live: false }));
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music', is_live: false }));
             }
         }
     }, 500);
@@ -191,6 +201,6 @@ if (hostname === 'soundcloud.com' || hostname === 'music.youtube.com' || hostnam
 
 window.addEventListener('beforeunload', function (e) {
     if (conn.readyState == WebSocket.OPEN) {
-        conn.send("closed - " + hostname);
+        conn.send(`closed - ${hostname} (${guid})`);
     }
 });
