@@ -1,6 +1,6 @@
 # OBSNowPlayingOverlay - 正在播放
 
-![MainWindows](Docs/MainWindow.png)
+![MainWindows](Docs/MainWindow.gif)
 
 ![MainWindows2](Docs/MainWindow2.png)
 
@@ -13,12 +13,13 @@
 - 顯示播放狀態
 - 緩慢新增的可自訂化介面
 - 自動更新 (v1.0.1 新增)
+- 自動監測現在是否為直播影片 (v1.0.2 新增)
 - ~~還有些我抓不到的 Bug~~
 
 # 如何使用
 
-1. 安裝[瀏覽器插件](https://chromewebstore.google.com/detail/obs-%E6%AD%A3%E5%9C%A8%E6%92%AD%E6%94%BE/bbaajjiddghleiifnnhagkgjfihnkphe)
-2. [點我下載](https://github.com/konnokai/OBSNowPlayingOverlay/releases/latest/download/OBSNowPlayingOverlay_v1.0.1.zip) 最新版的 `OBSNowPlayingOverlay.zip` 壓縮包並解壓縮
+1. 安裝 [瀏覽器插件](https://chromewebstore.google.com/detail/obs-%E6%AD%A3%E5%9C%A8%E6%92%AD%E6%94%BE/bbaajjiddghleiifnnhagkgjfihnkphe)
+2. [點我下載](https://github.com/konnokai/OBSNowPlayingOverlay/releases/latest/download/OBSNowPlayingOverlay.zip) 最新版的 `OBSNowPlayingOverlay.zip` 壓縮包並解壓縮
 3. 確保瀏覽器插件已安裝，並打開 `OBSNowPlayingOverlay.exe` (應該會提示要安裝 .NET 6 Desktop Runtime，如果沒有的話就下載 [這個](https://dotnet.microsoft.com/zh-tw/download/dotnet/thank-you/runtime-desktop-6.0.35-windows-x64-installer) 來安裝)
 4. 設定想要的字型以及視窗寬度
 5. 打開 OBS，新增 `視窗擷取` 來源，並按照下方圖片設定
