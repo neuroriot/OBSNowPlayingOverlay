@@ -24,7 +24,7 @@ namespace OBSNowPlayingOverlay
         private readonly ObservableCollection<KeyValuePair<string, FontFamily>> _fontFamilies = new();
 
         private WebSocketServer? _wsServer;
-       private readonly TaskCompletionSource<bool> _updateCheckTask = new();
+        private readonly TaskCompletionSource<bool> _updateCheckTask = new();
 
         public SettingWindow()
         {
@@ -109,8 +109,14 @@ namespace OBSNowPlayingOverlay
                 chkb_UseCoverImageAsBackground.IsChecked = _config.IsUseCoverImageAsBackground;
             });
 
+            chkb_TopMost.Dispatcher.Invoke(() =>
+            {
+                chkb_TopMost.IsChecked = _config.IsTopmost;
+            });
+
             ReloadFonts(_config.IsLoadSystemFonts);
             _mainWindow.SetUseCoverImageAsBackground(_config.IsUseCoverImageAsBackground);
+            _mainWindow.SetTopmost(_config.IsTopmost);
 
             cb_FontChooser.Dispatcher.Invoke(() =>
             {
@@ -242,6 +248,14 @@ namespace OBSNowPlayingOverlay
             _config.IsUseCoverImageAsBackground = isUseCoverImageAsBackground;
 
             _mainWindow.SetUseCoverImageAsBackground(isUseCoverImageAsBackground);
+        }
+
+        private void chkb_TopMost_Click(object sender, RoutedEventArgs e)
+        {
+            bool isTopmost = chkb_TopMost.IsChecked.HasValue && chkb_TopMost.IsChecked.Value;
+            _config.IsTopmost = isTopmost;
+
+            _mainWindow.SetTopmost(isTopmost);
         }
     }
 }

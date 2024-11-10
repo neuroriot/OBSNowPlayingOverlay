@@ -263,6 +263,14 @@ namespace OBSNowPlayingOverlay
             latestTitle = ""; // 清除最後保存的標題來觸發狀態更新
         }
 
+        internal void SetTopmost(bool isTopmost)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                Topmost = isTopmost;
+            });
+        }
+
         // https://github.com/SixLabors/ImageSharp/issues/531#issuecomment-2275170928
         private WriteableBitmap GetBMP(Image<Rgba32> _imgState)
         {
