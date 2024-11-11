@@ -103,11 +103,13 @@ namespace OBSNowPlayingOverlay
             if (latestTitle != nowPlayingJson.Title)
             {
                 latestTitle = nowPlayingJson.Title;
-                AnsiConsole.MarkupLineInterpolated($"歌曲切換: [green]{nowPlayingJson.Artists.FirstOrDefault() ?? "無"} - {nowPlayingJson.Title}[/]");
+                var artists = nowPlayingJson.Artists != null ? string.Join(", ", nowPlayingJson.Artists) : "無";
+
+                AnsiConsole.MarkupLineInterpolated($"歌曲切換: [green]{artists} - {nowPlayingJson.Title}[/]");
                 AnsiConsole.MarkupLineInterpolated($"歌曲連結: [green]{nowPlayingJson.SongLink}[/]");
 
                 rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
-                rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Content = nowPlayingJson.Artists.FirstOrDefault() ?? "無"; });
+                rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Content = artists; });
 
                 try
                 {
@@ -196,6 +198,9 @@ namespace OBSNowPlayingOverlay
                         break;
                     case "spotify":
                         progressColor = Color.FromRgb(30, 215, 96);
+                        break;
+                    case "bilibili":
+                        progressColor = Color.FromRgb(0, 174, 236);
                         break;
                 }
             }
