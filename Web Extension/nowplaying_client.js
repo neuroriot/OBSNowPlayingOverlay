@@ -201,8 +201,17 @@ function start_transfer() {
 
             // 直接判段 player 裡面有沒有對應的 class
             let status = query('#bilibili-player > div > div', e => e.classList.contains('bpx-state-paused') ? 'stopped' : 'playing', 'stopped');
-            let duration = query('video', e => e.duration * 1000, 0);
+
+            let duration = query('video', e => e.duration * 1000, 1);
             let progress = query('video', e => e.currentTime * 1000, 0);
+            
+            // 有機會遇到 duration == null 的情況
+            // 若遇到就把兩個數值設定為 1 跟 0 避免 Json 轉換失敗以及數值計算錯誤
+            if (!duration) {
+                duration = 1;
+                progress = 0;
+            }
+
             let cover = navigator.mediaSession.metadata.artwork[0].src;
             let song_link = document.location.href.split('?')[0];
 
