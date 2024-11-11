@@ -29,10 +29,9 @@ function join() {
 };
 
 // https://github.com/CyberJack/chrome_guid/blob/master/chrome_guid/src/guid_content.js
-function generateGuid()
-{
-    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
+function generateGuid() {
+    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
     });
     return uuid;
@@ -85,7 +84,7 @@ function start_transfer() {
             }
         } else if (hostname === 'open.spotify.com') {
             let data = navigator.mediaSession;
-            let status = query('.XrZ1iHVHAPMya3jkB2sa > button', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Слушать'|| e.getAttribute('aria-label') === '播放' ? 'stopped' : 'playing'));
+            let status = query('.XrZ1iHVHAPMya3jkB2sa > button', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Слушать' || e.getAttribute('aria-label') === '播放' ? 'stopped' : 'playing'));
             let cover = ''
             let title = ''
             let artists = ''
@@ -114,16 +113,10 @@ function start_transfer() {
                 conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
             }
         } else if (hostname === 'www.youtube.com') {
-            if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
+            if (!navigator.mediaSession.metadata)
                 return;
             if (window.location.href == 'https://www.youtube.com/') // 在主頁面
                 return;
-
-            let artists = [];
-
-            try {
-                artists = [navigator.mediaSession.metadata.artist]; // 改用 mediaSession 來獲取作者資訊
-            } catch (e) { }
 
             let title = query('.style-scope.ytd-video-primary-info-renderer', e => {
                 let t = e.getElementsByClassName('title');
@@ -132,26 +125,30 @@ function start_transfer() {
                 return "";
             });
 
+            if (title === null)
+                return;
+
+            // 改用 mediaSession 來獲取作者資訊
+            let artists = [navigator.mediaSession.metadata.artist];
+            let status = navigator.mediaSession.playbackState; // playbackState = playing, paused, none
+
             let duration = query('video', e => e.duration * 1000);
             let progress = query('video', e => e.currentTime * 1000);
+
             let cover = navigator.mediaSession.metadata.artwork[0].src;
-            let status = navigator.mediaSession.playbackState; // playbackState = playing, paused, none
             let song_link = window.location.href.split('&')[0];
-            let is_live = false;
 
             // 檢測觀看的影片是否正在直播中
+            let is_live = false;
             if (document.querySelector('#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > div.ytp-time-display.notranslate.ytp-live > button')) {
                 is_live = true;
             }
-
-            if (title === null)
-                return;
 
             title = title.replace("(Official Audio)", "");
             title = title.replace("(Official Music Video)", "");
             title = title.replace("(Original Video)", "");
             title = title.replace("(Original Mix)", "");
-            
+
             if (status == 'playing' && progress > 0) {
                 isStopped = false;
                 conn.send(JSON.stringify({ guid, cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
@@ -161,27 +158,29 @@ function start_transfer() {
                 conn.send(JSON.stringify({ guid, cover, title, artists, status, progress: Math.floor(progress), duration, song_link, platform: 'youtube', is_live }));
             }
         } else if (hostname === 'music.youtube.com') {
-            if (!navigator.mediaSession.metadata) // if nothing is playing we don't submit anything, otherwise having two youtube tabs open causes issues
+            if (!navigator.mediaSession.metadata)
                 return;
 
-            let time = query('.ytmusic-player-bar.time-info', e => e.innerText.split(" / "));
+            let title = document.getElementsByClassName("title style-scope ytmusic-player-bar")[0].innerHTML;
+            if (title === null)
+                return;
 
             let status = query('#play-pause-button', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Воспроизвести' || e.getAttribute('aria-label') === '播放' ? 'stopped' : 'playing'));
-
-            let title = document.getElementsByClassName("title style-scope ytmusic-player-bar")[0].innerHTML;
             let artists = [navigator.mediaSession.metadata.artist];
             let artwork = navigator.mediaSession.metadata.artwork;
             let cover = artwork[artwork.length - 1].src;
+
+            let time = query('.ytmusic-player-bar.time-info', e => e.innerText.split(" / "));
             let progress = timestamp_to_ms(time[0]);
             let duration = timestamp_to_ms(time[1]);
-            let lnk = navigator.mediaSession.metadata.artwork[0].src;
-            let song_link = 'https://www.youtube.com/watch?v=' + lnk.substring(
-                lnk.indexOf("vi/") + 3,
-                lnk.lastIndexOf("/sddefault")
-            );
 
-            if (title === null)
-                return;
+            // Todo: 不起作用，先改由直接讀取網頁連結，待修正
+            // let lnk = navigator.mediaSession.metadata.artwork[0].src;
+            // let song_link = 'https://www.youtube.com/watch?v=' + lnk.substring(
+            //     lnk.indexOf("vi/") + 3,
+            //     lnk.lastIndexOf("/sddefault")
+            // );
+            let song_link = document.location.href.split('&')[0];
 
             if (status == 'playing') {
                 isStopped = false;
@@ -192,10 +191,57 @@ function start_transfer() {
                 conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'youtube_music', is_live: false }));
             }
         }
+        else if (hostname === 'www.bilibili.com') {
+            if (!navigator.mediaSession.metadata)
+                return;
+
+            let title = navigator.mediaSession.metadata.title;
+            if (title === null)
+                return;
+
+            // 直接判段 player 裡面有沒有對應的 class
+            let status = query('#bilibili-player > div > div', e => e.classList.contains('bpx-state-paused') ? 'stopped' : 'playing', 'stopped');
+            let duration = query('video', e => e.duration * 1000, 0);
+            let progress = query('video', e => e.currentTime * 1000, 0);
+            let cover = navigator.mediaSession.metadata.artwork[0].src;
+            let song_link = document.location.href.split('?')[0];
+
+            let artists = [];
+            if (document.querySelector('.up-detail-top > a.up-name')) { // 只有一個作者
+                artists.push(query('.up-detail-top > a.up-name', e => e.text, '').trim());
+            }
+            else if (document.querySelector('.members-info-container > div > div.container')) { // 聯合投稿
+                query('.members-info-container > div > div.container', e => {
+                    // 選取所有擁有 "staff-name" class 的元素
+                    let staffNames = e.querySelectorAll('.staff-name');
+
+                    // 將每個元素的文字內容提取出來，並加入 artists 陣列中
+                    staffNames.forEach((element) => {
+                        artists.push(element.textContent.trim());
+                    });
+                });
+            }
+            else {
+                console.error('無法取得 Artists 資料');
+            }
+
+            if (status == 'playing') {
+                isStopped = false;
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'bilibili', is_live: false }));
+            }
+            else if (status == 'stopped' && !isStopped) {
+                isStopped = true;
+                conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'bilibili', is_live: false }));
+            }
+        }
     }, 500);
 }
 
-if (hostname === 'soundcloud.com' || hostname === 'music.youtube.com' || hostname === 'www.youtube.com' || hostname === 'open.spotify.com') {
+if (hostname === 'soundcloud.com' ||
+    hostname === 'music.youtube.com' ||
+    hostname === 'www.youtube.com' ||
+    hostname === 'open.spotify.com' ||
+    hostname === "www.bilibili.com") {
     join();
 };
 

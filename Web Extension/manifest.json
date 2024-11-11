@@ -1,6 +1,6 @@
 {
   "name": "OBS - 正在播放",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "用來發送資料給 OBSNowPlayingOverlay 的工具",
   "manifest_version": 3,
   "author": "孤之界 (修改自 Tizhproger)",
@@ -10,7 +10,8 @@
       "matches": [
         "https://*.youtube.com/*",
         "https://*.spotify.com/*",
-        "https://*.soundcloud.com/*"
+        "https://*.soundcloud.com/*",
+        "https://*.bilibili.com/*"
       ],
       "js": ["nowplaying_client.js"]
     }
