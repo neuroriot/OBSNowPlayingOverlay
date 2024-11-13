@@ -83,16 +83,17 @@ namespace OBSNowPlayingOverlay
                 _wsServer = new WebSocketServer(IPAddress.Loopback, 52998);
                 _wsServer.AddWebSocketService<NowPlaying>("/");
                 _wsServer.Start();
+                AnsiConsole.MarkupLine("伺服器狀態: [green]已啟動![/]");
             }
             catch (System.Net.Sockets.SocketException ex) when (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse)
             {
-                AnsiConsole.MarkupLine("[red]伺服器啟動失敗，請確認是否有其他應用程式使用 TCP 52998 Port[/]");
+                AnsiConsole.MarkupLine("伺服器狀態: [red]啟動失敗，請確認是否有其他應用程式使用 TCP 52998 Port[/]");
                 AnsiConsole.WriteException(ex);
                 return;
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine("[red]伺服器啟動失敗，未知的錯誤，請向開發者詢問[/]");
+                AnsiConsole.MarkupLine("伺服器狀態: [red]啟動失敗，未知的錯誤，請向開發者詢問[/]");
                 AnsiConsole.WriteException(ex);
                 return;
             }
