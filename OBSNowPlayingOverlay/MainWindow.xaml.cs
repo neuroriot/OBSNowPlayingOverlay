@@ -9,7 +9,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Media.Media3D;
 using Color = System.Windows.Media.Color;
 using FontFamily = System.Windows.Media.FontFamily;
 using Image = SixLabors.ImageSharp.Image;
