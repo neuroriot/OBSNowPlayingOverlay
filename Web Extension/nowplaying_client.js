@@ -71,7 +71,7 @@ function start_transfer() {
                 song_link = document.getElementsByClassName('playbackSoundBadge__avatar')[0].href.split('?')[0];
             }
 
-            if (title === null)
+            if (!title)
                 return;
 
             if (status == "playing") {
@@ -113,36 +113,54 @@ function start_transfer() {
                 conn.send(JSON.stringify({ guid, cover, title, artists, status, progress, duration, song_link, platform: 'spotify', is_live: false }));
             }
         } else if (hostname === 'www.youtube.com') {
-            if (!navigator.mediaSession.metadata)
+            if (!navigator.mediaSession.metadata) {
                 return;
-            if (window.location.href == 'https://www.youtube.com/') // 在主頁面
-                return;
+            }
 
-            let title = query('.style-scope.ytd-video-primary-info-renderer', e => {
-                let t = e.getElementsByClassName('title');
-                if (t && t.length > 0)
-                    return t[0].innerText;
-                return "";
-            });
-
-            if (title === null)
+            // 在主頁面
+            if (window.location.href == 'https://www.youtube.com/') {
                 return;
+            }
+
+            let title, artists, status, duration, progress, cover, song_link, is_live = false;
+
+            // 在看 Short 影片
+            if (window.location.href.indexOf('shorts') != -1) {
+                title = navigator.mediaSession.metadata.title;
+
+                if (!title)
+                    return;
+
+                // Short 影片要另外用方法來獲取目前播放進度
+                duration = 100;
+                progress = query('yt-progress-bar > div', e => parseInt(e.getAttribute('aria-valuenow')));
+            }
+            else {
+                title = query('.style-scope.ytd-video-primary-info-renderer', e => {
+                    let t = e.getElementsByClassName('title');
+                    if (t && t.length > 0)
+                        return t[0].innerText;
+                    return "";
+                });
+
+                if (!title || title === '')
+                    return;
+
+                duration = query('video', e => e.duration * 1000);
+                progress = query('video', e => e.currentTime * 1000);
+
+                // 檢測觀看的影片是否正在直播中
+                if (document.querySelector('#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > div.ytp-time-display.notranslate.ytp-live > button')) {
+                    is_live = true;
+                }
+            }
 
             // 改用 mediaSession 來獲取作者資訊
-            let artists = [navigator.mediaSession.metadata.artist];
-            let status = navigator.mediaSession.playbackState; // playbackState = playing, paused, none
+            artists = [navigator.mediaSession.metadata.artist];
+            status = navigator.mediaSession.playbackState; // playbackState = playing, paused, none
 
-            let duration = query('video', e => e.duration * 1000);
-            let progress = query('video', e => e.currentTime * 1000);
-
-            let cover = navigator.mediaSession.metadata.artwork[0].src;
-            let song_link = window.location.href.split('&')[0];
-
-            // 檢測觀看的影片是否正在直播中
-            let is_live = false;
-            if (document.querySelector('#movie_player > div.ytp-chrome-bottom > div.ytp-chrome-controls > div.ytp-left-controls > div.ytp-time-display.notranslate.ytp-live > button')) {
-                is_live = true;
-            }
+            cover = navigator.mediaSession.metadata.artwork[0].src;
+            song_link = window.location.href.split('&')[0];
 
             title = title.replace("(Official Audio)", "");
             title = title.replace("(Official Music Video)", "");
@@ -162,7 +180,7 @@ function start_transfer() {
                 return;
 
             let title = document.getElementsByClassName("title style-scope ytmusic-player-bar")[0].innerHTML;
-            if (title === null)
+            if (!title)
                 return;
 
             let status = query('#play-pause-button', e => e === null ? 'stopped' : (e.getAttribute('aria-label') === 'Play' || e.getAttribute('aria-label') === 'Воспроизвести' || e.getAttribute('aria-label') === '播放' ? 'stopped' : 'playing'));
@@ -196,7 +214,7 @@ function start_transfer() {
                 return;
 
             let title = navigator.mediaSession.metadata.title;
-            if (title === null)
+            if (!title)
                 return;
 
             // 直接判段 player 裡面有沒有對應的 class
@@ -204,7 +222,7 @@ function start_transfer() {
 
             let duration = query('video', e => e.duration * 1000, 1);
             let progress = query('video', e => e.currentTime * 1000, 0);
-            
+
             // 有機會遇到 duration == null 的情況
             // 若遇到就把兩個數值設定為 1 跟 0 避免 Json 轉換失敗以及數值計算錯誤
             if (!duration) {
