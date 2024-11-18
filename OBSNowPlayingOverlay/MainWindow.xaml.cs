@@ -9,6 +9,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 using Color = System.Windows.Media.Color;
 using FontFamily = System.Windows.Media.FontFamily;
 using Image = SixLabors.ImageSharp.Image;
@@ -104,6 +105,7 @@ namespace OBSNowPlayingOverlay
             {
                 latestTitle = nowPlayingJson.Title;
                 var artists = nowPlayingJson.Artists != null ? string.Join(", ", nowPlayingJson.Artists) : "無";
+                double grayLevel = 0d;
 
                 AnsiConsole.MarkupLineInterpolated($"歌曲切換: [green]{artists} - {nowPlayingJson.Title}[/]");
                 AnsiConsole.MarkupLineInterpolated($"歌曲連結: [green]{nowPlayingJson.SongLink}[/]");
@@ -113,7 +115,7 @@ namespace OBSNowPlayingOverlay
 
                 try
                 {
-                    AnsiConsole.MarkupLineInterpolated($"開始下載封面: [green]{nowPlayingJson.Cover}[/]");
+                    AnsiConsole.MarkupLineInterpolated($"下載封面: [green]{nowPlayingJson.Cover}[/]");
 
                     using var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
                     using var image = await Image.LoadAsync<Rgba32>(imageStream);
@@ -146,7 +148,7 @@ namespace OBSNowPlayingOverlay
 
                     if (isUseCoverImageAsBackground)
                     {
-                        // 直接將圖片模糊化
+                        // 將圖片模糊化
                         image.Mutate(x => x.GaussianBlur(12));
 
                         bg.Dispatcher.Invoke(() =>
@@ -157,6 +159,27 @@ namespace OBSNowPlayingOverlay
                                 Stretch = Stretch.UniformToFill
                             };
                         });
+
+                        // 將圖片縮放，以提高計算效率，並灰階化
+                        image.Mutate(x => x.Resize(128, 0).Grayscale());
+
+                        // 計算縮放後圖片的平均亮度
+                        double totalBrightness = 0;
+                        int width = image.Width;
+                        int height = image.Height;
+
+                        for (int y = 0; y < height; y++)
+                        {
+                            for (int x = 0; x < width; x++)
+                            {
+                                // 使用 indexer 獲取像素
+                                Rgba32 pixel = image[x, y];
+                                double brightness = (pixel.R + pixel.G + pixel.B) / 3.0;
+                                totalBrightness += brightness;
+                            }
+                        }
+
+                        grayLevel = Math.Round((totalBrightness / (width * height)), 2);
                     }
                     else
                     {
@@ -175,7 +198,24 @@ namespace OBSNowPlayingOverlay
                         {
                             bg.Background = new SolidColorBrush(Color.FromArgb(color.A, color.R, color.G, color.B));
                         });
+
+                        grayLevel = Math.Round((color.R + color.G + color.B) / 3d, 2);
                     }
+
+                    AnsiConsole.MarkupLineInterpolated($"封面灰階等級: [green]{grayLevel}[/]");
+
+                    // 取得圖片是否為亮色系
+                    var isLightBackground = grayLevel >= 128;
+
+                    // SolidColorBrush 不可在與 DispatcherObject 不同的執行緒上建立，所以只能用這種很醜的方式來寫
+                    // https://stackoverflow.com/a/8010725/15800522
+                    rb_Title.Dispatcher.Invoke(() => { rb_Title.Foreground = new SolidColorBrush(isLightBackground ? Color.FromRgb(0, 0, 0) : Color.FromRgb(255, 255, 255)); });
+                    rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Foreground = new SolidColorBrush(isLightBackground ? Color.FromRgb(0, 0, 0) : Color.FromRgb(255, 255, 255)); });
+
+                    // 根據灰階等級來設定字的顏色，但效果有點不好，暫時作罷
+                    //var colorLevel = (byte)(255d - grayLevel);
+                    //rb_Title.Dispatcher.Invoke(() => { rb_Title.Foreground = new SolidColorBrush(Color.FromRgb(colorLevel, colorLevel, colorLevel)); });
+                    //rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Foreground = new SolidColorBrush(Color.FromRgb(colorLevel, colorLevel, colorLevel)); });
                 }
                 catch (Exception ex)
                 {
