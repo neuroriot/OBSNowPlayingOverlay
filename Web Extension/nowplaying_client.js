@@ -213,7 +213,8 @@ function start_transfer() {
             if (!navigator.mediaSession.metadata)
                 return;
 
-            let title = navigator.mediaSession.metadata.title;
+            // 用 query 方式來獲取標題
+            let title = query('#viewbox_report > div.video-info-title > div > h1', e => e.getAttribute('title'));
             if (!title)
                 return;
 

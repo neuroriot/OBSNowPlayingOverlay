@@ -1,6 +1,6 @@
 {
   "name": "OBS - 正在播放",
-  "version": "1.0.3",
+  "version": "1.0.3.1",
   "description": "用來發送資料給 OBSNowPlayingOverlay 的工具",
   "manifest_version": 3,
   "author": "孤之界 (修改自 Tizhproger)",
