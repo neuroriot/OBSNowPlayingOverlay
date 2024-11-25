@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "OAuthBackend": {
+      "commandName": "Project",
+      "workingDirectory": ".\\bin\\Debug\\net6.0",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:7220;http://localhost:7221"
+    }
+  }
+}
