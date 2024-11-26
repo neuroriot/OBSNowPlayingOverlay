@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OAuthBackend", "OAuthBackend\OAuthBackend.csproj", "{D4742516-1917-4328-91D9-35085BCF26F4}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OBSNowPlayingOverlay", "OBSNowPlayingOverlay\OBSNowPlayingOverlay.csproj", "{298E45D2-0711-4A3D-8AF8-82EA243FA7B3}"
 EndProject
 Global
@@ -13,10 +11,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D4742516-1917-4328-91D9-35085BCF26F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D4742516-1917-4328-91D9-35085BCF26F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D4742516-1917-4328-91D9-35085BCF26F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D4742516-1917-4328-91D9-35085BCF26F4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{298E45D2-0711-4A3D-8AF8-82EA243FA7B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{298E45D2-0711-4A3D-8AF8-82EA243FA7B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{298E45D2-0711-4A3D-8AF8-82EA243FA7B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -24,8 +18,5 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {7F27DCC4-358F-4C7E-9B1B-870BCF0AE02D}
 	EndGlobalSection
 EndGlobal
