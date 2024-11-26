@@ -1,4 +1,5 @@
-﻿using SixLabors.ImageSharp;
+﻿using OBSNowPlayingOverlay.TwitchBot;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Quantization;
@@ -23,7 +24,10 @@ namespace OBSNowPlayingOverlay
     public partial class MainWindow : Window
     {
         public static BlockingCollection<NowPlayingJson> MsgQueue { get; } = new();
+        public static Bot TwitchBot { get; private set; } = new();
         public static string LatestWebSocketGuid { get; set; } = "";
+        public static string NowPlayingTitle { get; private set; } = "";
+        public static string NowPlayingUrl { get; private set; } = "";
 
         private readonly HttpClient _httpClient;
         private string latestTitle = "";
@@ -103,6 +107,8 @@ namespace OBSNowPlayingOverlay
             if (latestTitle != nowPlayingJson.Title)
             {
                 latestTitle = nowPlayingJson.Title;
+                NowPlayingTitle = nowPlayingJson.Title;
+                NowPlayingUrl = nowPlayingJson.SongLink;
                 var artists = nowPlayingJson.Artists != null ? string.Join(", ", nowPlayingJson.Artists) : "無";
                 double grayLevel = 0d;
 

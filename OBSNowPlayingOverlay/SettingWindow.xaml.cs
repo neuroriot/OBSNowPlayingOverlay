@@ -19,6 +19,8 @@ namespace OBSNowPlayingOverlay
     /// </summary>
     public partial class SettingWindow : Window
     {
+        public static TwitchBotConfig TwitchBotConfig { get; set; } = new();
+
         private readonly Config _config = new();
         private readonly MainWindow _mainWindow = new();
         private readonly ObservableCollection<KeyValuePair<string, FontFamily>> _fontFamilies = new();
@@ -74,6 +76,25 @@ namespace OBSNowPlayingOverlay
                     catch { }
 
                     AnsiConsole.MarkupLine("[red]設定檔載入失敗，將使用預設設定[/]");
+                    AnsiConsole.WriteException(ex);
+                }
+            }
+
+            if (File.Exists("TwitchBotConfig.json"))
+            {
+                try
+                {
+                    TwitchBotConfig = JsonConvert.DeserializeObject<TwitchBotConfig>(File.ReadAllText("TwitchBotConfig.json"))!;
+                }
+                catch (Exception ex)
+                {
+                    try
+                    {
+                        File.Delete("TwitchBotConfig.json");
+                    }
+                    catch { }
+
+                    AnsiConsole.MarkupLine("[red]TwitchBotConfig 設定檔載入失敗，請重新登入 Twitch[/]");
                     AnsiConsole.WriteException(ex);
                 }
             }
@@ -145,6 +166,14 @@ namespace OBSNowPlayingOverlay
             try
             {
                 File.WriteAllText("Config.json", JsonConvert.SerializeObject(_config, Formatting.Indented));
+            }
+            catch (Exception)
+            {
+            }
+
+            try
+            {
+                File.WriteAllText("TwitchBotConfig.json", JsonConvert.SerializeObject(TwitchBotConfig, Formatting.Indented));
             }
             catch (Exception)
             {
@@ -257,6 +286,12 @@ namespace OBSNowPlayingOverlay
             _config.IsTopmost = isTopmost;
 
             _mainWindow.SetTopmost(isTopmost);
+        }
+
+        private void btn_TwitchBotSetting_Click(object sender, RoutedEventArgs e)
+        {
+            var twitchBotWindow = new TwitchBotWindow(TwitchBotConfig);
+            twitchBotWindow.ShowDialog();
         }
     }
 }
