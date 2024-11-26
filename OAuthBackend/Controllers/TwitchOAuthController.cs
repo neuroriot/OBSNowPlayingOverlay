@@ -7,6 +7,7 @@ using OAuthBackend.Services;
 using OAuthBackend.Services.Auth;
 using StackExchange.Redis;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace OAuthBackend.Controllers
@@ -43,10 +44,23 @@ namespace OAuthBackend.Controllers
 
         [EnableCors("allowGET")]
         [HttpGet]
-        public IActionResult GetTwitchOAuthUrl(string state)
+        public async Task<IActionResult> GetTwitchOAuthUrl(string state)
         {
             if (string.IsNullOrEmpty(state))
-                return new BadRequestResult();
+                return new APIResult(ResultStatusCode.BadRequest, "state 不可空白").ToContextResult();
+
+            try
+            {
+                if (await _redisService.RedisDb.KeyExistsAsync($"nowplaying-server:twitch:state:{state}"))
+                    return new APIResult(ResultStatusCode.BadRequest, "該 state 已被使用，請刷新後重試").ToContextResult();
+
+                await _redisService.RedisDb.StringSetAsync($"nowplaying-server:twitch:state:{state}", "0", TimeSpan.FromMinutes(15));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "OAuthCallBack - Redis 設定錯誤\n");
+                return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報").ToContextResult();
+            }
 
             return Redirect($"https://id.twitch.tv/oauth2/authorize" +
                 $"?response_type=code" +
@@ -66,6 +80,9 @@ namespace OAuthBackend.Controllers
 
             try
             {
+                if (!await _redisService.RedisDb.KeyExistsAsync($"nowplaying-server:twitch:state:{state}"))
+                    return new APIResult(ResultStatusCode.BadRequest, "該 state 並未使用過，請重新執行登入流程");
+
                 if (await _redisService.RedisDb.KeyExistsAsync($"nowplaying-server:twitch:code:{code}"))
                     return new APIResult(ResultStatusCode.BadRequest, "請確認是否有插件或軟體導致重複驗證\n如網頁正常顯示資料則無需理會");
 
@@ -73,7 +90,7 @@ namespace OAuthBackend.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "TwitchCallBack - Redis 設定錯誤\n");
+                _logger.LogError(ex, "OAuthCallBack - Redis 設定錯誤\n");
                 return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報");
             }
 
@@ -97,9 +114,48 @@ namespace OAuthBackend.Controllers
                         TokenType = authCodeResponse.TokenType,
                     };
 
+                    TwitchLib.Api.Helix.Models.Users.GetUsers.GetUsersResponse userData = null;
+                    try
+                    {
+                        userData = await _twitchAPI.Helix.Users.GetUsersAsync(accessToken: twitchAccessTokenData.AccessToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message.Contains("401") || ex.Message.Contains("403"))
+                        {
+                            _logger.LogError(ex, "OAuthCallBack - 401 or 403 錯誤\n");
+                            return new APIResult(ResultStatusCode.Unauthorized, "請嘗試重新登入 Twitch 帳號");
+                        }
+                        else
+                        {
+                            _logger.LogError(ex, "OAuthCallBack - Twitch API 回傳錯誤\n");
+                            return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報");
+                        }
+                    }
+
+                    if (userData == null)
+                    {
+                        _logger.LogWarning("OAuthCallBack - 無法取得資料\n");
+                        return new APIResult(ResultStatusCode.BadRequest, "無法取得資料，請向孤之界回報");
+                    }
+
+                    var user = userData.Users.First();
+
                     var encValue = _tokenService.CreateTokenResponseToken(twitchAccessTokenData);
-                    await _redisService.RedisDb.StringSetAsync(new($"nowplaying-server:twitch:oauth:{state}"), encValue);
-                    return new APIResult(ResultStatusCode.OK, "登入完成，請關閉本頁面並返回程式");
+                    await _redisService.RedisDb.StringSetAsync(new($"nowplaying-server:twitch:oauth:{user.Id}"), encValue);
+
+                    string token = "";
+                    try
+                    {
+                        token = _tokenService.CreateToken(user.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogCritical(ex, "OAuthCallBack - 建立 JWT 錯誤\n");
+                        return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報");
+                    }
+
+                    return new APIResult(ResultStatusCode.OK, new { token });
                 }
                 else
                 {
@@ -115,7 +171,7 @@ namespace OAuthBackend.Controllers
                 }
                 else
                 {
-                    _logger.LogError(ex, "TwitchCallBack - 整體錯誤\n");
+                    _logger.LogError(ex, "OAuthCallBack - 整體錯誤\n");
                     return new APIResult(ResultStatusCode.InternalServerError, "伺服器內部錯誤，請向孤之界回報");
                 }
             }
@@ -123,14 +179,18 @@ namespace OAuthBackend.Controllers
 
         [EnableCors("allowGET")]
         [HttpGet]
-        public async Task<APIResult> GetTwitchOAuthData(string token = "")
+        public async Task<APIResult> GetTwitchData(string token = "")
         {
             if (string.IsNullOrEmpty(token))
                 return new APIResult(ResultStatusCode.BadRequest, "Token 不可為空");
 
             try
             {
-                var twitchTokenEnc = await _redisService.RedisDb.StringGetAsync(new RedisKey($"nowplaying-server:twitch:oauth:{token}"));
+                var userId = _tokenService.GetUser<string>(token);
+                if (string.IsNullOrEmpty(userId))
+                    return new APIResult(ResultStatusCode.Unauthorized, "Token 無效");
+
+                var twitchTokenEnc = await _redisService.RedisDb.StringGetAsync(new RedisKey($"nowplaying-server:twitch:oauth:{userId}"));
                 if (!twitchTokenEnc.HasValue)
                     return new APIResult(ResultStatusCode.Unauthorized, "請登入 Twitch 帳號");
 
@@ -153,7 +213,7 @@ namespace OAuthBackend.Controllers
                         twitchToken.Scopes = refreshResponse.Scopes;
 
                         var encValue = _tokenService.CreateTokenResponseToken(refreshResponse);
-                        await _redisService.RedisDb.StringSetAsync(new($"nowplaying-server:twitch:oauth:{token}"), encValue);
+                        await _redisService.RedisDb.StringSetAsync(new($"nowplaying-server:twitch:oauth:{userId}"), encValue);
                     }
                 }
                 catch (Exception ex)
@@ -162,7 +222,7 @@ namespace OAuthBackend.Controllers
                     return new APIResult(ResultStatusCode.Unauthorized, "無法刷新 Twitch 授權\n請重新登入 Twitch 帳號");
                 }
 
-                return new APIResult(ResultStatusCode.OK, new { oauth_data = twitchToken });
+                return new APIResult(ResultStatusCode.OK, new { access_token = twitchToken.AccessToken, client_id = _configuration["Twitch:ClientId"], user_id = userId });
             }
             catch (Exception ex)
             {

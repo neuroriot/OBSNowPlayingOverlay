@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
@@ -113,5 +114,14 @@ namespace OAuthBackend
         public int Code { get; set; }
         [JsonProperty("message")]
         public object Message { get; set; }
+
+        public ContentResult ToContextResult()
+        {
+            return new ContentResult()
+            {
+                StatusCode = Code,
+                Content = JsonConvert.SerializeObject(this)
+            };
+        }
     }
 }

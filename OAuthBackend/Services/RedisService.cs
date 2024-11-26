@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Threading;
 
 namespace OAuthBackend.Services
@@ -15,9 +13,6 @@ namespace OAuthBackend.Services
         public IDatabase RedisDb { get; set; }
 
         private readonly ILogger<RedisService> _logger;
-        private readonly BlockingCollection<KeyValuePair<string, string>> _messageQueue = new(1);
-        private readonly ConcurrentDictionary<string, KeyValuePair<string, string>> _needRePublishMessageList = new();
-
         private readonly IConfiguration _configuration;
         private readonly Timer _timer;
 
@@ -33,7 +28,7 @@ namespace OAuthBackend.Services
                 RedisDb = Redis.GetDatabase(1);
                 RedisSub = Redis.GetSubscriber();
 
-                _logger.LogInformation("Redis已連線");
+                _logger.LogInformation("Redis 已連線");
             }
             catch (Exception exception)
             {
