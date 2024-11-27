@@ -11,7 +11,7 @@ namespace OBSNowPlayingOverlay.TwitchBot
     public class Bot
     {
         public bool? IsConnect { get { return client?.IsConnected; } }
-        
+
         private TwitchClient? client = null;
         private DateTime latestNPCommandExecuteTime = DateTime.MinValue;
 
