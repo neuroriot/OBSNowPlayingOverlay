@@ -235,6 +235,10 @@ namespace OBSNowPlayingOverlay
             {
                 btn_StopBot.IsEnabled = true;
             });
+            btn_CheckAccessToken.Dispatcher.Invoke(() =>
+            {
+                btn_CheckAccessToken.IsEnabled = false;
+            });
         }
 
         private void btn_StopBot_Click(object sender, RoutedEventArgs e)
@@ -248,6 +252,10 @@ namespace OBSNowPlayingOverlay
             btn_StopBot.Dispatcher.Invoke(() =>
             {
                 btn_StopBot.IsEnabled = false;
+            });
+            btn_CheckAccessToken.Dispatcher.Invoke(() =>
+            {
+                btn_CheckAccessToken.IsEnabled = true;
             });
         }
     }
