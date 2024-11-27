@@ -179,7 +179,7 @@ function start_transfer() {
             if (!navigator.mediaSession.metadata)
                 return;
 
-            let title = document.getElementsByClassName("title style-scope ytmusic-player-bar")[0].innerHTML;
+            let title = query('.ytp-title-link', e => e.innerText);
             if (!title)
                 return;
 
@@ -192,13 +192,8 @@ function start_transfer() {
             let progress = timestamp_to_ms(time[0]);
             let duration = timestamp_to_ms(time[1]);
 
-            // Todo: 不起作用，先改由直接讀取網頁連結，待修正
-            // let lnk = navigator.mediaSession.metadata.artwork[0].src;
-            // let song_link = 'https://www.youtube.com/watch?v=' + lnk.substring(
-            //     lnk.indexOf("vi/") + 3,
-            //     lnk.lastIndexOf("/sddefault")
-            // );
-            let song_link = document.location.href.split('&')[0];
+            let query_link = new URL(query('.ytp-title-link', e => e.getAttribute('href')));
+            let song_link = 'https://music.youtube.com/watch?v=' + query_link.searchParams.get('v');
 
             if (status == 'playing') {
                 isStopped = false;
