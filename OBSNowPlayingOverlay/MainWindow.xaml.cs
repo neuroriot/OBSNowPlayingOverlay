@@ -1,11 +1,14 @@
-﻿using OBSNowPlayingOverlay.TwitchBot;
+﻿using ImageMagick;
+using OBSNowPlayingOverlay.TwitchBot;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Quantization;
 using Spectre.Console;
 using System.Collections.Concurrent;
+using System.IO;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -122,7 +125,12 @@ namespace OBSNowPlayingOverlay
                 {
                     AnsiConsole.MarkupLineInterpolated($"下載封面: [green]{nowPlayingJson.Cover}[/]");
 
-                    using var imageStream = await _httpClient.GetStreamAsync(nowPlayingJson.Cover);
+                    // 因 YouTube 開始將圖片轉換成 avif，故先使用 MagickImage 讀取圖片並轉換成 jpeg
+                    // https://github.com/dlemstra/Magick.NET/blob/main/docs/ConvertImage.md
+                    using var magickImage = new MagickImage(await _httpClient.GetStreamAsync(nowPlayingJson.Cover));
+                    magickImage.Format = MagickFormat.Jpeg;
+
+                    using var imageStream = new MemoryStream(magickImage.ToByteArray());
                     using var image = await Image.LoadAsync<Rgba32>(imageStream);
                     using var coverImage = image.Clone();
 
