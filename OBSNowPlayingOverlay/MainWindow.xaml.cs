@@ -8,7 +8,6 @@ using Spectre.Console;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
