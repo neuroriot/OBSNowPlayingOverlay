@@ -1,50 +1,119 @@
-﻿<Window x:Class="OBSNowPlayingOverlay.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:OBSNowPlayingOverlay"
-        xmlns:hc="https://handyorg.github.io/handycontrol"
-        mc:Ignorable="d"
-        Title="正在播放 - 主視窗" Height="120" Width="400" Icon="/Assets/icon.png" Closing="Window_Closing" AllowsTransparency="True" WindowStyle="None" MouseMove="Window_MouseMove" Background="{x:Null}" Left="150" Top="150" ResizeMode="NoResize">
-    <Window.Resources>
-        <local:RectConverter x:Key="RectConverter"/>
-    </Window.Resources>
-    <Grid x:Name="grid" MouseMove="grid_MouseMove">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="120"/>
-            <ColumnDefinition Width="*"/>
-        </Grid.ColumnDefinitions>
+<Window
+	x:Class="OBSNowPlayingOverlay.MainWindow"
+	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+	xmlns:hc="https://handyorg.github.io/handycontrol"
+	xmlns:local="clr-namespace:OBSNowPlayingOverlay"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+	Title="Now Playing - Main Window"
+	Width="400"
+	Height="120"
+	AllowsTransparency="True"
+	Background="{x:Null}"
+	Closing="Window_Closing"
+	Icon="/Assets/icon.png"
+	Left="150"
+	MouseMove="Window_MouseMove"
+	ResizeMode="NoResize"
+	Top="150"
+	WindowStyle="None"
+	mc:Ignorable="d">
+	<Window.Resources>
+		<local:RectConverter x:Key="RectConverter" />
+	</Window.Resources>
+	<Grid x:Name="grid" MouseMove="grid_MouseMove">
+		<Grid.ColumnDefinitions>
+			<ColumnDefinition Width="120" />
+			<ColumnDefinition Width="*" />
+		</Grid.ColumnDefinitions>
 
-        <Border x:Name="bg" CornerRadius="8" Background="#FF8C6161" Grid.ColumnSpan="1" Grid.RowSpan="3" Grid.Column="1" Height="110" Margin="-8,0,0,0">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="50"/>
-                    <RowDefinition Height="30"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+		<Border
+			x:Name="bg"
+			Grid.RowSpan="3"
+			Grid.Column="1"
+			Grid.ColumnSpan="1"
+			Height="110"
+			Margin="-8,0,0,0"
+			Background="#FF8C6161"
+			CornerRadius="8">
+			<Grid>
+				<Grid.RowDefinitions>
+					<RowDefinition Height="50" />
+					<RowDefinition Height="30" />
+					<RowDefinition Height="*" />
+				</Grid.RowDefinitions>
 
-                <hc:RunningBlock x:Name="rb_Title" Content="標題" Margin="16,0,8,0" VerticalAlignment="Center" Padding="0,0,0,0" IsEnabled="False" AutoRun="True" Speed="50" Grid.ColumnSpan="1" BorderBrush="{x:Null}" Foreground="White" Grid.Column="1" FontSize="36" FontFamily="cjkFonts 全瀨體"/>
-                <hc:RunningBlock x:Name="rb_Subtitle" Content="作者" Margin="16,0,8,0" Grid.Row="1" Padding="0,0,0,0" IsEnabled="False" AutoRun="True" Speed="50" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Grid.ColumnSpan="1" BorderBrush="{x:Null}" Foreground="White" Grid.Column="1" FontSize="20" FontFamily="cjkFonts 全瀨體"/>
-                <ProgressBar x:Name="pb_Process" Style="{DynamicResource ProgressBarFlat}" Grid.Row="2" Grid.ColumnSpan="1" VerticalAlignment="Center" Foreground="Red" Background="#FF8C8C8C" Height="2" Grid.Column="1" Margin="16,0,8,0"/>
-            </Grid>
-        </Border>
+				<hc:RunningBlock
+					x:Name="rb_Title"
+					Grid.Column="1"
+					Grid.ColumnSpan="1"
+					Margin="16,0,8,0"
+					Padding="0,0,0,0"
+					VerticalAlignment="Center"
+					AutoRun="True"
+					BorderBrush="{x:Null}"
+					Content="標題"
+					FontFamily="cjkFonts 全瀨體"
+					FontSize="36"
+					Foreground="White"
+					IsEnabled="False"
+					Speed="50" />
+				<hc:RunningBlock
+					x:Name="rb_Subtitle"
+					Grid.Row="1"
+					Grid.Column="1"
+					Grid.ColumnSpan="1"
+					Margin="16,0,8,0"
+					Padding="0,0,0,0"
+					HorizontalAlignment="Stretch"
+					HorizontalContentAlignment="Left"
+					AutoRun="True"
+					BorderBrush="{x:Null}"
+					Content="作者"
+					FontFamily="cjkFonts 全瀨體"
+					FontSize="20"
+					Foreground="White"
+					IsEnabled="False"
+					Speed="50" />
+				<ProgressBar
+					x:Name="pb_Process"
+					Grid.Row="2"
+					Grid.Column="1"
+					Grid.ColumnSpan="1"
+					Height="2"
+					Margin="16,0,8,0"
+					VerticalAlignment="Center"
+					Background="#FF8C8C8C"
+					Foreground="Red"
+					Style="{DynamicResource ProgressBarFlat}" />
+			</Grid>
+		</Border>
 
-        <Image x:Name="img_Cover" Source="/Assets/record-player.png" Width="120" Height="120" Stretch="UniformToFill">
-            <Image.Clip>
-                <RectangleGeometry RadiusX="8" RadiusY="8">
-                    <RectangleGeometry.Rect>
-                        <MultiBinding Converter="{StaticResource RectConverter}">
-                            <Binding ElementName="img_Cover" Path="ActualWidth"/>
-                            <Binding ElementName="img_Cover" Path="ActualHeight"/>
-                        </MultiBinding>
-                    </RectangleGeometry.Rect>
-                </RectangleGeometry>
-            </Image.Clip>
-        </Image>
-        <Grid x:Name="grid_Pause" Visibility="Hidden">
-            <Rectangle Fill="Black" Opacity="0.5" />
-            <Image Width="120" Height="120" Source="/Assets/pause.png" Opacity="0.75" />
-        </Grid>
-    </Grid>
+		<Image
+			x:Name="img_Cover"
+			Width="120"
+			Height="120"
+			Source="/Assets/record-player.png"
+			Stretch="UniformToFill">
+			<Image.Clip>
+				<RectangleGeometry RadiusX="8" RadiusY="8">
+					<RectangleGeometry.Rect>
+						<MultiBinding Converter="{StaticResource RectConverter}">
+							<Binding ElementName="img_Cover" Path="ActualWidth" />
+							<Binding ElementName="img_Cover" Path="ActualHeight" />
+						</MultiBinding>
+					</RectangleGeometry.Rect>
+				</RectangleGeometry>
+			</Image.Clip>
+		</Image>
+		<Grid x:Name="grid_Pause" Visibility="Hidden">
+			<Rectangle Fill="Black" Opacity="0.5" />
+			<Image
+				Width="120"
+				Height="120"
+				Opacity="0.75"
+				Source="/Assets/pause.png" />
+		</Grid>
+	</Grid>
 </Window>

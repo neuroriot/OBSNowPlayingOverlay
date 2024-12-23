@@ -1,4 +1,4 @@
-﻿using AutoUpdaterDotNET;
+using AutoUpdaterDotNET;
 using Newtonsoft.Json;
 using OBSNowPlayingOverlay.WebSocketBehavior;
 using Spectre.Console;
@@ -14,9 +14,7 @@ using FontFamily = System.Windows.Media.FontFamily;
 
 namespace OBSNowPlayingOverlay
 {
-    /// <summary>
-    /// SettingWindow.xaml 的互動邏輯
-    /// </summary>
+    /// <summary>Interaction logic of SettingWindow.xaml</summary>
     public partial class SettingWindow : Window
     {
         public static TwitchBotConfig TwitchBotConfig { get; set; } = new();
@@ -32,33 +30,37 @@ namespace OBSNowPlayingOverlay
         {
             InitializeComponent();
 
-            try
-            {
-                AutoUpdater.RunUpdateAsAdmin = false;
-                AutoUpdater.HttpUserAgent = "OBSNowPlayingOverlay";
-                AutoUpdater.SetOwner(this);
-                AutoUpdater.CheckForUpdateEvent += (e) =>
-                {
-                    if (e.Error != null)
-                    {
-                        AnsiConsole.WriteException(e.Error);
-                    }
-                    else if (e.IsUpdateAvailable)
-                    {
-                        AnsiConsole.MarkupLine("檢查更新: [green]發現更新![/]");
-                        AutoUpdater.ShowUpdateForm(e);
-                    }
-                    else
-                    {
-                        AnsiConsole.MarkupLine("檢查更新: [darkorange3]沒有需要更新[/]");
-                    }
-                };
 
-                AutoUpdater.Start("https://raw.githubusercontent.com/konnokai/OBSNowPlayingOverlay/refs/heads/master/Docs/Update.xml");
-            }
-            catch (Exception ex)
+            if (false)
             {
-                AnsiConsole.WriteException(ex);
+                try
+                {
+                    AutoUpdater.RunUpdateAsAdmin = false;
+                    AutoUpdater.HttpUserAgent = "OBSNowPlayingOverlay";
+                    AutoUpdater.SetOwner(this);
+                    AutoUpdater.CheckForUpdateEvent += (e) =>
+                    {
+                        if (e.Error != null)
+                        {
+                            AnsiConsole.WriteException(e.Error);
+                        }
+                        else if (e.IsUpdateAvailable)
+                        {
+                            AnsiConsole.MarkupLine("Check for updates: [green]Update found![/]");
+                            AutoUpdater.ShowUpdateForm(e);
+                        }
+                        else
+                        {
+                            AnsiConsole.MarkupLine("Check for updates: [darkorange3]No updates required[/]");
+                        }
+                    };
+
+                    AutoUpdater.Start("https://raw.githubusercontent.com/konnokai/OBSNowPlayingOverlay/refs/heads/master/Docs/Update.xml");
+                }
+                catch (Exception ex)
+                {
+                    AnsiConsole.WriteException(ex);
+                }
             }
 
             if (File.Exists("Config.json"))
@@ -75,7 +77,7 @@ namespace OBSNowPlayingOverlay
                     }
                     catch { }
 
-                    AnsiConsole.MarkupLine("[red]設定檔載入失敗，將使用預設設定[/]");
+                    AnsiConsole.MarkupLine("[red]Failed to load configuration file, default settings will be used[/]");
                     AnsiConsole.WriteException(ex);
                 }
             }
@@ -94,7 +96,7 @@ namespace OBSNowPlayingOverlay
                     }
                     catch { }
 
-                    AnsiConsole.MarkupLine("[red]TwitchBotConfig 設定檔載入失敗，請重新登入 Twitch[/]");
+                    AnsiConsole.MarkupLine("[red]TwitchBotConfig configuration file failed to load, please log in to Twitch again[/]");
                     AnsiConsole.WriteException(ex);
                 }
             }
@@ -104,17 +106,17 @@ namespace OBSNowPlayingOverlay
                 _wsServer = new WebSocketServer(IPAddress.Loopback, 52998);
                 _wsServer.AddWebSocketService<NowPlaying>("/");
                 _wsServer.Start();
-                AnsiConsole.MarkupLine("伺服器狀態: [green]已啟動![/]");
+                AnsiConsole.MarkupLine("Server status: [green]Started![/]");
             }
             catch (System.Net.Sockets.SocketException ex) when (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse)
             {
-                AnsiConsole.MarkupLine("伺服器狀態: [red]啟動失敗，請確認是否有其他應用程式使用 TCP 52998 Port[/]");
+                AnsiConsole.MarkupLine("Server status: [red]Startup failed, please check if there are other applications using TCP 52998 Port[/]");
                 AnsiConsole.WriteException(ex);
                 return;
             }
             catch (Exception ex)
             {
-                AnsiConsole.MarkupLine("伺服器狀態: [red]啟動失敗，未知的錯誤，請向開發者詢問[/]");
+                AnsiConsole.MarkupLine("Server status: [red]Start failed, unknown error, please ask the developer[/]");
                 AnsiConsole.WriteException(ex);
                 return;
             }
@@ -231,11 +233,11 @@ namespace OBSNowPlayingOverlay
 
                         _fontFamilies.Add(new KeyValuePair<string, FontFamily>(fontName, fontFamilies.First()));
 
-                        AnsiConsole.MarkupLineInterpolated($"載入自訂字型: [green]{fontName}[/]");
+                        AnsiConsole.MarkupLineInterpolated($"Load custom font: [green]{fontName}[/]");
                     }
                     catch (Exception ex)
                     {
-                        AnsiConsole.MarkupLineInterpolated($"[red]字型載入失敗: {Path.GetFileName(item)}[/]");
+                        AnsiConsole.MarkupLineInterpolated($"[red]Font loading failed:{Path.GetFileName(item)}[/]");
                         AnsiConsole.WriteException(ex);
                     }
                 }
@@ -248,7 +250,7 @@ namespace OBSNowPlayingOverlay
                     _fontFamilies.Add(new KeyValuePair<string, FontFamily>(item.FamilyNames.First().Value, item));
                 }
 
-                AnsiConsole.MarkupLineInterpolated($"載入系統字型: [green]{Fonts.SystemFontFamilies.Count}[/] 個");
+                AnsiConsole.MarkupLineInterpolated($"Load system font: [green]{Fonts.SystemFontFamilies.Count}[/] Piece");
             }
         }
 

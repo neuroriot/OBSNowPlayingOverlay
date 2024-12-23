@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Spectre.Console;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
@@ -26,7 +26,7 @@ namespace OBSNowPlayingOverlay.WebSocketBehavior
                 client.Value.IsPlaying = false;
             }
 
-            // 更新最新的播放 Client
+            // Update the latest playback Client
             if (_clientDict.TryGetValue(MainWindow.LatestWebSocketGuid, out var clientInfo))
             {
                 if (clientInfo.IsPlaying)
@@ -93,7 +93,7 @@ namespace OBSNowPlayingOverlay.WebSocketBehavior
 
                     if (match.Groups["Type"].ToString() == "connected")
                     {
-                        AnsiConsole.MarkupLineInterpolated($"連線狀態變更: [springgreen4]新連線[/] | [yellow4_1]{match.Groups["SiteName"]}[/] | [purple4_1]{guid}[/]");
+                        AnsiConsole.MarkupLineInterpolated($"Connection status change: [springgreen4]New connection[/] | [yellow4_1]{match.Groups["SiteName"]}[/] | [purple4_1]{guid}[/]");
 
                         if (!_clientDict.ContainsKey(guid))
                         {
@@ -102,7 +102,7 @@ namespace OBSNowPlayingOverlay.WebSocketBehavior
                     }
                     else if (match.Groups["Type"].ToString() == "closed")
                     {
-                        AnsiConsole.MarkupLineInterpolated($"連線狀態變更: [orangered1]已關閉[/] | [yellow4_1]{match.Groups["SiteName"]}[/] | [purple4_1]{guid}[/]");
+                        AnsiConsole.MarkupLineInterpolated($"Connection status change: [orangered1]Close[/] | [yellow4_1]{match.Groups["SiteName"]}[/] | [purple4_1]{guid}[/]");
                         _clientDict.TryRemove(guid, out _);
 
                         if (MainWindow.LatestWebSocketGuid == guid)
@@ -113,7 +113,7 @@ namespace OBSNowPlayingOverlay.WebSocketBehavior
                 }
                 else
                 {
-                    AnsiConsole.MarkupLineInterpolated($"接收到未處理的資料: [dodgerblue2]{e.Data}[/]");
+                    AnsiConsole.MarkupLineInterpolated($"Unprocessed data received: [dodgerblue2]{e.Data}[/]");
                 }
             }
             catch (OperationCanceledException) { }

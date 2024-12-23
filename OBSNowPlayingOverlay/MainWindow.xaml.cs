@@ -1,4 +1,4 @@
-﻿using ImageMagick;
+using ImageMagick;
 using OBSNowPlayingOverlay.TwitchBot;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -94,37 +94,37 @@ namespace OBSNowPlayingOverlay
 
         public async Task UpdateNowPlayingDataAsync(NowPlayingJson nowPlayingJson)
         {
-            // 如果 LatestWebSocketGuid 為空，則代表有發送端已關閉，以最新接收到的發送端來更新狀態
+            // If LatestWebSocketGuid is empty, it means that one of the senders has been closed. Update the status with the latest received sender.
             if (LatestWebSocketGuid == "")
             {
-                AnsiConsole.MarkupLineInterpolated($"最後的 Guid 為空，改由此 Guid 繼續更新狀態: [purple4_1]{nowPlayingJson.Guid}[/]");
+                AnsiConsole.MarkupLineInterpolated($"The last Guid is empty, change this Guid to continue updating the status: [purple4_1]{nowPlayingJson.Guid}[/]");
                 LatestWebSocketGuid = nowPlayingJson.Guid;
             }
 
-            // 檢測發送端的 Guid 是否為最新的，避免重複更新播放狀態
+            // Check whether the Guid of the sending end is the latest to avoid repeatedly updating the playback status
             if (LatestWebSocketGuid != nowPlayingJson.Guid)
                 return;
 
-            // 檢測標題是否有變更
+            // Check if the title has changed
             if (latestTitle != nowPlayingJson.Title)
             {
                 latestTitle = nowPlayingJson.Title;
                 NowPlayingTitle = nowPlayingJson.Title;
                 NowPlayingUrl = nowPlayingJson.SongLink;
-                var artists = nowPlayingJson.Artists != null ? string.Join(", ", nowPlayingJson.Artists) : "無";
+                var artists = nowPlayingJson.Artists != null ? string.Join(", ", nowPlayingJson.Artists) : "Without";
                 double grayLevel = 0d;
 
-                AnsiConsole.MarkupLineInterpolated($"歌曲切換: [green]{artists} - {nowPlayingJson.Title}[/]");
-                AnsiConsole.MarkupLineInterpolated($"歌曲連結: [green]{nowPlayingJson.SongLink}[/]");
+                AnsiConsole.MarkupLineInterpolated($"Song switching: [green]{artists} - {nowPlayingJson.Title}[/]");
+                AnsiConsole.MarkupLineInterpolated($"Song link: [green]{nowPlayingJson.SongLink}[/]");
 
                 rb_Title.Dispatcher.Invoke(() => { rb_Title.Content = nowPlayingJson.Title; });
                 rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Content = artists; });
 
                 try
                 {
-                    AnsiConsole.MarkupLineInterpolated($"下載封面: [green]{nowPlayingJson.Cover}[/]");
+                    AnsiConsole.MarkupLineInterpolated($"Download cover: [green]{nowPlayingJson.Cover}[/]");
 
-                    // 因 YouTube 開始將圖片轉換成 avif，故先使用 MagickImage 讀取圖片並轉換成 jpeg
+                    // Since YouTube started converting images to avif, we first used MagickImage to read the images and convert them to jpegs.
                     // https://github.com/dlemstra/Magick.NET/blob/main/docs/ConvertImage.md
                     using var magickImage = new MagickImage(await _httpClient.GetStreamAsync(nowPlayingJson.Cover));
                     magickImage.Format = MagickFormat.Jpeg;
@@ -133,11 +133,11 @@ namespace OBSNowPlayingOverlay
                     using var image = await Image.LoadAsync<Rgba32>(imageStream);
                     using var coverImage = image.Clone();
 
-                    // 若圖片非正方形才進行裁切
+                    // Only crop the image if it is not square
                     if (coverImage.Width != coverImage.Height)
                     {
-                        // 將圖片從正中間裁切
-                        // 若圖片的寬比較大，就由寬來裁切
+                        // Crop the image from the center
+                        // If the width of the picture is relatively large, it will be cropped by the width.
                         if (coverImage.Width > coverImage.Height)
                         {
                             int x = coverImage.Width / 2 - coverImage.Height / 2;
@@ -152,7 +152,7 @@ namespace OBSNowPlayingOverlay
                         }
                     }
 
-                    // 設定封面圖片
+                    // Set cover image
                     img_Cover.Dispatcher.Invoke(() =>
                     {
                         img_Cover.Source = GetBMP(coverImage);
@@ -160,32 +160,37 @@ namespace OBSNowPlayingOverlay
 
                     if (isUseCoverImageAsBackground)
                     {
-                        // 將圖片模糊化
-                        image.Mutate(x => x.GaussianBlur(12));
+                        using var bgImage = coverImage.Clone();
+                        bgImage.Mutate(x => x.Resize(188, 188/2));
+                        // Blur the picture
+                        bgImage.Mutate(x => x.GaussianBlur(3));
 
                         bg.Dispatcher.Invoke(() =>
                         {
                             bg.Background = new ImageBrush()
                             {
-                                ImageSource = GetBMP(image),
-                                Stretch = Stretch.UniformToFill
+                                ImageSource = GetBMP(bgImage),
+                                TileMode = TileMode.Tile,
+                                Stretch = Stretch.None
                             };
                         });
 
-                        // 將圖片縮放，以提高計算效率，並灰階化
-                        image.Mutate(x => x.Resize(128, 0).Grayscale());
+                        // Scale the image to improve calculation efficiency and grayscale it (from usually 336x188)
+                        bgImage.Mutate(x => x.Resize(128, 72).Grayscale());
+                        //bgImage.Mutate(x => x.Resize(336, 188).Grayscale());
+                        //image.Mutate(x => x.Grayscale());
 
-                        // 計算縮放後圖片的平均亮度
+                        // Calculate the average brightness of the scaled image
                         double totalBrightness = 0;
-                        int width = image.Width;
-                        int height = image.Height;
+                        int width = bgImage.Width;
+                        int height = bgImage.Height;
 
                         for (int y = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x++)
                             {
-                                // 使用 indexer 獲取像素
-                                Rgba32 pixel = image[x, y];
+                                // Use indexer to get pixels
+                                Rgba32 pixel = bgImage[x, y];
                                 double brightness = (pixel.R + pixel.G + pixel.B) / 3.0;
                                 totalBrightness += brightness;
                             }
@@ -195,7 +200,7 @@ namespace OBSNowPlayingOverlay
                     }
                     else
                     {
-                        // 取得圖片的主要顏色
+                        // Get the main color of the image
                         // https://gist.github.com/JimBobSquarePants/12e0ef5d904d03110febea196cf1d6ee
                         image.Mutate(x => x
                             // Scale the image down preserving the aspect ratio. This will speed up quantization.
@@ -204,7 +209,7 @@ namespace OBSNowPlayingOverlay
                             // Reduce the color palette to 1 color without dithering.
                             .Quantize(new OctreeQuantizer(new QuantizerOptions { MaxColors = 1 })));
 
-                        // 設定背景顏色
+                        // Set background color
                         var color = image[0, 0];
                         bg.Dispatcher.Invoke(() =>
                         {
@@ -214,24 +219,24 @@ namespace OBSNowPlayingOverlay
                         grayLevel = Math.Round((color.R + color.G + color.B) / 3d, 2);
                     }
 
-                    AnsiConsole.MarkupLineInterpolated($"封面灰階等級: [green]{grayLevel}[/]");
+                    AnsiConsole.MarkupLineInterpolated($"Cover grayscale: [green]{grayLevel}[/]");
 
-                    // 取得圖片是否為亮色系
+                    // Get whether the image is a bright color
                     var isLightBackground = grayLevel >= 128;
 
-                    // SolidColorBrush 不可在與 DispatcherObject 不同的執行緒上建立，所以只能用這種很醜的方式來寫
+                    // SolidColorBrush cannot be created on a different thread than DispatcherObject, so it can only be written in this ugly way
                     // https://stackoverflow.com/a/8010725/15800522
                     rb_Title.Dispatcher.Invoke(() => { rb_Title.Foreground = new SolidColorBrush(isLightBackground ? Color.FromRgb(0, 0, 0) : Color.FromRgb(255, 255, 255)); });
                     rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Foreground = new SolidColorBrush(isLightBackground ? Color.FromRgb(0, 0, 0) : Color.FromRgb(255, 255, 255)); });
 
-                    // 根據灰階等級來設定字的顏色，但效果有點不好，暫時作罷
+                    // Set the color of the words according to the grayscale level, but the effect is a bit bad, so I will give it up for now.
                     //var colorLevel = (byte)(255d - grayLevel);
                     //rb_Title.Dispatcher.Invoke(() => { rb_Title.Foreground = new SolidColorBrush(Color.FromRgb(colorLevel, colorLevel, colorLevel)); });
                     //rb_Subtitle.Dispatcher.Invoke(() => { rb_Subtitle.Foreground = new SolidColorBrush(Color.FromRgb(colorLevel, colorLevel, colorLevel)); });
                 }
                 catch (Exception ex)
                 {
-                    AnsiConsole.MarkupLine("[red]封面圖下載失敗，可能是找不到圖片或圖片解析錯誤[/]");
+                    AnsiConsole.MarkupLine("[red]The download of the cover image failed. It may be that the image cannot be found or there is an image parsing error[/]");
                     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
                 }
             }
@@ -257,7 +262,7 @@ namespace OBSNowPlayingOverlay
                 }
             }
 
-            if (nowPlayingJson.IsLive) // 正在直播就直接把進度條切滿
+            if (nowPlayingJson.IsLive) // When live streaming, just fill up the progress bar
             {
                 pb_Process.Dispatcher.Invoke(() =>
                 {
@@ -265,7 +270,7 @@ namespace OBSNowPlayingOverlay
                     pb_Process.Value = 100;
                 });
             }
-            else if (double.IsNormal(nowPlayingJson.Progress) && double.IsNormal(nowPlayingJson.Duration)) // 正常影片
+            else if (double.IsNormal(nowPlayingJson.Progress) && double.IsNormal(nowPlayingJson.Duration)) // Normal video
             {
                 pb_Process.Dispatcher.Invoke(() =>
                 {
@@ -305,7 +310,7 @@ namespace OBSNowPlayingOverlay
             rb_Title.Dispatcher.Invoke(() =>
             {
                 rb_Title.Speed = speed;
-                rb_Title.OnApplyTemplate(); // 需要執行這類方法來觸發更新
+                rb_Title.OnApplyTemplate(); // This type of method needs to be executed to trigger updates
             });
             rb_Subtitle.Dispatcher.Invoke(() =>
             {
@@ -317,7 +322,7 @@ namespace OBSNowPlayingOverlay
         internal void SetUseCoverImageAsBackground(bool useCoverImage)
         {
             isUseCoverImageAsBackground = useCoverImage;
-            latestTitle = ""; // 清除最後保存的標題來觸發狀態更新
+            latestTitle = ""; // Clear last saved title to trigger status update
         }
 
         internal void SetTopmost(bool isTopmost)

@@ -1,4 +1,4 @@
-﻿using Spectre.Console;
+using Spectre.Console;
 using System.Windows;
 
 namespace OBSNowPlayingOverlay
@@ -10,7 +10,7 @@ namespace OBSNowPlayingOverlay
     {
         public App()
         {
-            Console.Title = "正在播放 - 紀錄視窗";
+            Console.Title = "Now Playing - Record Window";
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             Console.CancelKeyPress += (sender, e) => { e.Cancel = true; };
             Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;

@@ -1,4 +1,4 @@
-﻿using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Core;
 using Newtonsoft.Json;
 using Spectre.Console;
 using System.Diagnostics;
@@ -10,9 +10,7 @@ using TwitchLib.Api;
 
 namespace OBSNowPlayingOverlay
 {
-    /// <summary>
-    /// TwitchBotWindow.xaml 的互動邏輯
-    /// </summary>
+    /// <summary>Interaction logic of TwitchBotWindow.xaml</summary>
     public partial class TwitchBotWindow : Window
     {
         private readonly TwitchBotConfig _twitchBotConfig;
@@ -107,7 +105,7 @@ namespace OBSNowPlayingOverlay
             var match = regex.Match(url);
             if (match.Success)
             {
-                AnsiConsole.MarkupLine("[green]Twitch 登入成功![/]");
+                AnsiConsole.MarkupLine("[green]Twitch login successful![/]");
 
                 string accessToken = match.Groups["AccessToken"].ToString();
                 SettingWindow.TwitchBotConfig.AccessToken = accessToken;
@@ -131,7 +129,7 @@ namespace OBSNowPlayingOverlay
             }
             else
             {
-                AnsiConsole.MarkupLine("[red]Twitch 登入失敗: 找不到 AccessToken，請重新登入[/]");
+                AnsiConsole.MarkupLine("[red]Twitch login failed: AccessToken not found, please log in again[/]");
                 webView.CoreWebView2.CookieManager.DeleteAllCookies();
                 btn_StartOAuth.Dispatcher.Invoke(() =>
                 {
@@ -168,7 +166,7 @@ namespace OBSNowPlayingOverlay
             var accessTokenResponse = await twitchAPI.Auth.ValidateAccessTokenAsync();
             if (accessTokenResponse == null)
             {
-                AnsiConsole.MarkupLine("[red]Twitch AccessToken 驗證失敗，請重新登入[/]");
+                AnsiConsole.MarkupLine("[red]Twitch AccessToken verification failed, please log in again[/]");
                 SettingWindow.TwitchBotConfig.AccessToken = "";
 
                 await webView.EnsureCoreWebView2Async()
@@ -198,7 +196,7 @@ namespace OBSNowPlayingOverlay
                 return;
             }
 
-            AnsiConsole.MarkupLineInterpolated($"[green]Twitch AccessToken 驗證成功，過期時間: {DateTime.Now.AddSeconds(accessTokenResponse.ExpiresIn)}[/]");
+            AnsiConsole.MarkupLineInterpolated($"[green]Twitch AccessToken verification successful, expiration time:{DateTime.Now.AddSeconds(accessTokenResponse.ExpiresIn)}[/]");
 
             txt_UserLogin.Dispatcher.Invoke(() =>
             {
