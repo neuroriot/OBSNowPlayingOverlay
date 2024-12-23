@@ -231,7 +231,7 @@ namespace OBSNowPlayingOverlay
                 }
                 catch (Exception ex)
                 {
-                    AnsiConsole.MarkupLine("[red]封面圖下載失敗，可能是找不到圖片[/]");
+                    AnsiConsole.MarkupLine("[red]封面圖下載失敗，可能是找不到圖片或圖片解析錯誤[/]");
                     AnsiConsole.WriteException(ex, ExceptionFormats.ShortenEverything);
                 }
             }
